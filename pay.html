@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>bKash Payment - Print Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+    <div class="max-w-lg mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-4 text-pink-600 text-center">bKash Payment Submission</h2>
+        
+        <%PY if not empty(success) PY%><div class="bg-green-100 text-green-700 p-3 mb-4 rounded text-sm"><%= e(success) =%></div><%PY endif PY%>        <%PY if not empty(error) PY%><div class="bg-red-100 text-red-700 p-3 mb-4 rounded text-sm"><%= e(error) =%></div><%PY endif PY%>
+        <div class="bg-pink-50 p-4 rounded-lg mb-4 text-sm text-pink-800">
+            <p class="font-bold">bKash Merchant/Personal Number: 01700000000</p>
+            <p>Please Send Money the due amount to this number and submit your Transaction ID (TrxID) below.</p>
+        </div>
+
+        <form action="" method="POST">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Select Order (Due)</label>
+                <select name="order_id" required class="w-full border p-2 rounded-lg">
+                    <option value="">Select an order</option>
+                    <%PY for row in orders PY%>                        <option value="<%= e(row['id']) =%>">File: <%= e(row['file_name']) =%> (Due: ৳<%= e(row['due_amount']) =%>)</option>
+                    <%PY endfor PY%>                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Amount Paid (BDT)</label>
+                <input type="number" step="0.01" name="amount_paid" required class="w-full border p-2 rounded-lg" placeholder="Enter amount">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">bKash Transaction ID (TrxID)</label>
+                <input type="text" name="trx_id" required class="w-full border p-2 rounded-lg" placeholder="e.g., 9H87G6F5D4">
+            </div>
+            <button type="submit" class="w-full bg-pink-600 text-white py-2 rounded-lg hover:bg-pink-700 transition font-bold">Submit Payment</button>
+        </form>
+        <div class="mt-4 text-center">
+            <a href="dashboard.php" class="text-indigo-600 text-sm underline">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1626 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Print Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Re-map the "indigo" palette to the soft periwinkle-blue of the login theme
+        tailwind.config = { theme: { extend: { colors: { indigo: {
+            50:'#f3f7ff',100:'#e4edff',200:'#cbdafb',300:'#a8c0f3',400:'#7f9fe0',500:'#6a8ed3',
+            600:'#5b7fc7',700:'#4767ab',800:'#37508a',900:'#2b3f78',950:'#1c2a55' } } } } };
+    </script>
+    <style>
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(22px) scale(.985); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pageReveal {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        @keyframes serviceFloat {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .animate-card {
+            opacity: 0;
+            animation: slideUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        body {
+            animation: pageReveal .45s ease-out both;
+        }
+        .service-grid .service-card:nth-child(1) { animation-delay: .08s; }
+        .service-grid .service-card:nth-child(2) { animation-delay: .16s; }
+        .service-grid .service-card:nth-child(3) { animation-delay: .24s; }
+        .service-card {
+            opacity: 0;
+            animation: slideUp .65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .service-card:hover .service-icon {
+            animation: serviceFloat 1.2s ease-in-out infinite;
+        }
+        .hero-card { overflow: visible; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+        .app-glass {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .select-card {
+            transition: all 0.25s ease;
+        }
+        input[type="radio"]:checked + .select-card,
+        input[type="checkbox"]:checked + .select-card {
+            border-color: #5b7fc7;
+            background-color: #eaf1ff;
+            color: #2c4170;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(91, 127, 199, 0.22);
+        }
+        input[type="radio"]:checked + .select-card .select-indicator,
+        input[type="checkbox"]:checked + .select-card .select-indicator {
+            background-color: #5b7fc7;
+            border-color: #5b7fc7;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .popup-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .popup-box {
+            background: #ffffff;
+            padding: 35px 25px 30px 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 340px;
+            width: 90%;
+            transform: scale(0.7);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .popup-overlay.show .popup-box {
+            transform: scale(1);
+        }
+
+        .wavy-badge {
+            width: 75px;
+            height: 75px;
+            background: #4caf50;
+            border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(76, 175, 80, 0.3);
+            animation: badgeBounceAndRotate 2.5s infinite ease-in-out;
+        }
+        .error-badge {
+            background: #f44336 !important;
+            box-shadow: 0 8px 16px rgba(244, 67, 54, 0.3) !important;
+        }
+
+        @keyframes badgeBounceAndRotate {
+            0% { transform: scale(1) rotate(0deg); border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; }
+            50% { transform: scale(1.08) rotate(10deg); border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%; }
+            100% { transform: scale(1) rotate(0deg); border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; }
+        }
+
+        .badge-inner {
+            width: 52px;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .popup-box h3 {
+            margin-bottom: 6px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+        .popup-box p {
+            font-size: 13.5px;
+            color: #666;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        body { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; }
+        .themed-bg {
+            background:
+                radial-gradient(circle at 12% 18%, rgba(150,180,255,0.45) 0, transparent 38%),
+                radial-gradient(circle at 88% 78%, rgba(120,160,240,0.35) 0, transparent 40%),
+                linear-gradient(135deg, #f3f7ff 0%, #dce8ff 100%);
+            background-attachment: fixed;
+        }
+        .bg-blob { position: fixed; border-radius: 50%; background: rgba(91,127,199,0.10); z-index: 0; pointer-events: none; }
+        .container, nav { position: relative; }
+        .container { z-index: 1; }
+        nav.nav-grad { background: linear-gradient(135deg, #2b3f78 0%, #4767ab 100%); box-shadow: 0 8px 24px rgba(43,63,120,0.28); }
+        .app-glass { border-radius: 26px !important; border: 1px solid rgba(91,127,199,0.16); box-shadow: 0 14px 34px -10px rgba(60,90,160,0.22), 0 4px 10px -4px rgba(60,90,160,0.08); }
+        .app-glass:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -10px rgba(60,90,160,0.28); }
+        .hero-card:hover { transform: none; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #b7c9ee; border-radius: 8px; }
+
+        /* ---- mascot ---- */
+        .hero-bear { position: absolute; right: 48px; bottom: calc(100% - 26px); width: 230px; height: 170px; z-index: 5; filter: drop-shadow(0 8px 10px rgba(30,50,110,0.22)); }
+        .hero-bear svg { width: 100%; height: 100%; overflow: visible; display: block; transform-origin: 50% 95%; animation: breathe 3.6s ease-in-out infinite; }
+        @keyframes breathe { 0%,100% { transform: scale(1,1); } 50% { transform: scale(1.012,1.022); } }
+        .eye-white { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
+        @keyframes blink { 0%,93%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
+        .pupil { transition: transform 0.12s ease-out; }
+        .eyelid { transform: scaleY(0); } .lid-line { opacity: 0; }
+        .bear-bubble { position: absolute; right: 292px; bottom: calc(100% + 18px); background: #fff; color: #33466b; font-weight: 800; font-size: 13px; padding: 10px 16px; border-radius: 18px 18px 4px 18px; box-shadow: 0 10px 24px rgba(60,90,160,0.2); animation: floaty 3s ease-in-out infinite; }
+        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @media (max-width: 767px) { .hero-bear { right: 50%; transform: translateX(50%); } .bear-bubble { display: none; } }
+
+        .stat-chip { background: linear-gradient(180deg, #f8faff, #eaf1ff); border: 1px solid #dbe5f7; border-radius: 18px; padding: 12px 14px; transition: transform .2s ease, box-shadow .2s ease; }
+        .stat-chip:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(91,127,199,0.2); }
+        .price-card { background: #fff; border: 1px solid #dbe5f7; border-radius: 20px; padding: 16px; text-align: center; transition: transform .2s ease, box-shadow .2s ease; }
+        .price-card:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(91,127,199,0.22); }
+        .step-dot { width: 38px; height: 38px; border-radius: 14px; background: linear-gradient(180deg,#7f9fe0,#5b7fc7); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px rgba(91,127,199,0.4); flex-shrink: 0; }
+    
+        /* Cover-page quantity controls: hide native number arrows; use only the visible +/- buttons. */
+        #coverSubjectRows input[type="number"],
+        #editCoverSubjectRows input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        #coverSubjectRows input[type="number"]::-webkit-outer-spin-button,
+        #coverSubjectRows input[type="number"]::-webkit-inner-spin-button,
+        #editCoverSubjectRows input[type="number"]::-webkit-outer-spin-button,
+        #editCoverSubjectRows input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        #coverSubjectRows .cover-subject-qty,
+        #editCoverSubjectRows input[name="edit_cover_subject_quantity[]"] {
+            min-width: 0;
+            width: 40px;
+        }
+
+        /* ===== Background animation + colour theme (same as admin dashboard) ===== */
+        .float-layer { position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
+        .float-layer span { position:absolute; bottom:-80px; color:rgba(91,127,199,.20); animation: drift linear infinite; }
+        @keyframes drift { 0% { transform: translateY(0) rotate(0); opacity:0; } 10% { opacity:1; } 90% { opacity:1; } 100% { transform: translateY(-115vh) rotate(360deg); opacity:0; } }
+        nav.nav-grad { background-size: 200% 200%; animation: navShift 14s ease infinite; }
+        @keyframes navShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        button.bg-indigo-600 { background:linear-gradient(135deg,#86a6e6 0%,#5b7fc7 55%,#4a6bb5 100%) !important; color:#fff !important; border:1px solid rgba(255,255,255,.35); box-shadow:0 10px 20px -6px rgba(74,107,181,.55), inset 0 1px 0 rgba(255,255,255,.35) !important; }
+        button.bg-indigo-600:hover { filter:brightness(1.07); }
+        button.bg-violet-600 { background:linear-gradient(135deg,#a9a0ee 0%,#8077d6 55%,#6a60c0 100%) !important; color:#fff !important; border:1px solid rgba(255,255,255,.35); box-shadow:0 10px 20px -6px rgba(106,96,192,.5), inset 0 1px 0 rgba(255,255,255,.35) !important; }
+        button.bg-violet-600:hover { filter:brightness(1.07); }
+        a.bg-rose-500 { background:linear-gradient(135deg,#ff9bb0 0%,#f2698b 60%,#e04f77 100%) !important; border:1px solid rgba(255,255,255,.4); box-shadow:0 8px 18px -5px rgba(224,79,119,.5), inset 0 1px 0 rgba(255,255,255,.4) !important; }
+        a.bg-rose-500:hover { filter:brightness(1.06); }
+        .order-scroll thead th { position: sticky; top: 0; z-index: 2; background: #eaf0fb; }
+        .order-scroll { scrollbar-width: thin; scrollbar-color: #b7c9ee transparent; }
+</style>
+</head>
+<body class="themed-bg font-sans min-h-screen text-slate-800 antialiased pb-12 relative">
+    <div class="float-layer" aria-hidden="true"><span style="left:81%;animation-duration:33s;animation-delay:-33s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span><span style="left:5%;animation-duration:29s;animation-delay:-3s"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></span><span style="left:22%;animation-duration:33s;animation-delay:-30s"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></span><span style="left:33%;animation-duration:39s;animation-delay:-6s"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></span><span style="left:75%;animation-duration:22s;animation-delay:-13s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></span><span style="left:54%;animation-duration:27s;animation-delay:-24s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg></span><span style="left:22%;animation-duration:26s;animation-delay:-28s"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16.5" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/></svg></span><span style="left:18%;animation-duration:22s;animation-delay:0s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span><span style="left:28%;animation-duration:27s;animation-delay:-10s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></span><span style="left:39%;animation-duration:28s;animation-delay:-34s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></span><span style="left:88%;animation-duration:27s;animation-delay:-12s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></span><span style="left:51%;animation-duration:22s;animation-delay:-23s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></span><span style="left:55%;animation-duration:26s;animation-delay:-16s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg></span><span style="left:10%;animation-duration:31s;animation-delay:-38s"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16.5" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/></svg></span></div>
+    <div class="bg-blob" style="width:340px;height:340px;left:-100px;bottom:-100px;"></div>
+    <div class="bg-blob" style="width:260px;height:260px;right:-80px;top:60px;"></div>
+
+    <!-- Popup Modal for Success/Error -->
+    <div id="popupOverlay" class="popup-overlay <%= 'show' if (not empty(error) or not empty(success)) else '' =%>">
+        <div class="popup-box">
+            <div class="wavy-badge <%= 'error-badge' if not empty(error) else '' =%>">
+                <div class="badge-inner">
+                    <%PY if not empty(error) PY%>                        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                    <%PY else PY%>                        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4 4L19 7.5"/></svg>
+                    <%PY endif PY%>                </div>
+            </div>
+            <h3><%= 'Oops!' if not empty(error) else 'Success!' =%></h3>
+            <p><%= e(error if not empty(error) else (success if not empty(success) else '')) =%></p>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <nav class="nav-grad text-white px-6 py-4 flex justify-between items-center shadow-lg sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <div class="bg-white/15 p-1.5 rounded-2xl border border-white/20 shadow-inner flex items-center justify-center">
+                <svg class="w-8 h-8" viewBox="0 0 40 40"><circle cx="9" cy="9" r="5.5" fill="#7a97d2"/><circle cx="31" cy="9" r="5.5" fill="#7a97d2"/><ellipse cx="20" cy="22" rx="16" ry="14" fill="#93afe4"/><circle cx="14" cy="18" r="5" fill="#fff"/><circle cx="26" cy="18" r="5" fill="#fff"/><circle cx="15" cy="19" r="2" fill="#15101c"/><circle cx="27" cy="19" r="2" fill="#15101c"/><ellipse cx="20" cy="24" rx="5" ry="3.4" fill="#b9cdf3"/><ellipse cx="20" cy="22.6" rx="2.2" ry="1.4" fill="#262033"/><path d="M13 27 Q20 36 27 27 Z" fill="#1a1020"/><rect x="18" y="27" width="4" height="3.4" rx="1" fill="#fff"/></svg>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-sm tracking-wide text-white">Campus Print Hub</h1>
+                <p class="text-[10px] text-indigo-300 font-medium">Automated Student Printing Portal</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 bg-indigo-800/60 px-4 py-2 rounded-2xl border border-indigo-700/50 backdrop-blur-md shadow-sm">
+            <span class="text-xs font-medium text-indigo-100">Hello, <b class="text-white"><%= h(student_name) =%></b></span>
+            <a href="logout.php" class="bg-rose-500 hover:bg-rose-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm hover:scale-105 active:scale-95">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-6">
+
+        <!-- Welcome Hero -->
+        <section class="relative mt-40">
+            <div class="bear-bubble hidden md:block">Hi! Need something printed?</div>
+            <div class="hero-bear" id="heroBear"><svg viewBox="0 0 230 170" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="fur" cx="0.38" cy="0.28" r="0.85">
+                        <stop offset="0" stop-color="#bfd2f6"/><stop offset="0.45" stop-color="#93afe4"/>
+                        <stop offset="0.8" stop-color="#6b89ca"/><stop offset="1" stop-color="#4f6aa8"/>
+                    </radialGradient>
+                    <radialGradient id="lightG" cx="0.34" cy="0.2" r="0.6">
+                        <stop offset="0" stop-color="#fff" stop-opacity="0.45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+                    </radialGradient>
+                    <linearGradient id="shadeG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0.55" stop-color="#1f2f6e" stop-opacity="0"/><stop offset="1" stop-color="#1f2f6e" stop-opacity="0.42"/>
+                    </linearGradient>
+                    <radialGradient id="snout" cx="0.45" cy="0.3" r="0.8">
+                        <stop offset="0" stop-color="#cfdcf8"/><stop offset="1" stop-color="#8fabe0"/>
+                    </radialGradient>
+                    <radialGradient id="eyeW" cx="0.45" cy="0.4" r="0.7">
+                        <stop offset="0" stop-color="#fff"/><stop offset="0.7" stop-color="#f4f7ff"/><stop offset="1" stop-color="#c5d0ea"/>
+                    </radialGradient>
+                    <radialGradient id="pupilG" cx="0.4" cy="0.35" r="0.8">
+                        <stop offset="0" stop-color="#3a3350"/><stop offset="1" stop-color="#0d0914"/>
+                    </radialGradient>
+                    <radialGradient id="noseG" cx="0.4" cy="0.3" r="0.8">
+                        <stop offset="0" stop-color="#5a5073"/><stop offset="1" stop-color="#15101f"/>
+                    </radialGradient>
+                    <linearGradient id="mouthG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#150b1b"/><stop offset="1" stop-color="#3d1730"/>
+                    </linearGradient>
+                    <linearGradient id="toothG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9e0f0"/>
+                    </linearGradient>
+                    <linearGradient id="tongueG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#ff9fab"/><stop offset="1" stop-color="#d95a70"/>
+                    </linearGradient>
+                    <radialGradient id="pinkG" cx="0.4" cy="0.3" r="0.8">
+                        <stop offset="0" stop-color="#f7bcb6"/><stop offset="1" stop-color="#d98a88"/>
+                    </radialGradient>
+                    <filter id="fuzzy" x="-12%" y="-12%" width="124%" height="124%">
+                        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" seed="4" result="n"/>
+                        <feDisplacementMap in="SourceGraphic" in2="n" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+                    </filter>
+                    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+                    <filter id="soft2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
+                    <clipPath id="headClip"><ellipse cx="115" cy="100" rx="90" ry="66"/></clipPath>
+                    <clipPath id="eyeClipL"><ellipse cx="80" cy="82" rx="30" ry="33"/></clipPath>
+                    <clipPath id="eyeClipR"><ellipse cx="150" cy="82" rx="30" ry="33"/></clipPath>
+                </defs>
+
+                <!-- contact shadow on the card -->
+                <ellipse cx="115" cy="164" rx="86" ry="9" fill="#2a3f85" opacity="0.28" filter="url(#soft)"/>
+
+                <!-- outer fur tufts -->
+                <path d="M32 119 q-4.3 1.9 -8.7 3.1 M150 158 q0.7 4.7 4.7 10.9 M188 134 q7.6 4.4 11.4 5.0 M66 48 q-3.8 -7.4 -7.8 -11.3 M147 159 q0.4 5.3 1.3 7.9 M29 92 q-5.9 -1.3 -11.4 -0.7 M202 99 q6.9 -0.8 15.3 0.6 M94 161 q1.0 3.0 -0.8 6.9 M199 84 q6.9 -2.4 10.5 -4.5 M201 92 q5.1 -1.3 8.0 -0.7 M189 133 q3.4 1.9 9.8 5.9 M185 137 q3.8 1.3 7.2 3.1 M147 159 q-0.1 5.6 2.9 11.9 M135 161 q1.2 6.5 3.9 9.9 M136 161 q0.3 7.0 3.8 10.0 M135 161 q0.7 2.2 3.1 7.9 M188 134 q3.6 3.0 8.3 6.3 M199 84 q3.9 -2.0 10.3 -1.2 M188 66 q5.8 -2.3 9.7 -8.2 M144 159 q2.7 5.1 6.0 13.3 M199 115 q5.2 3.4 12.3 4.1 M43 64 q-6.1 -3.2 -8.7 -4.3 M34 77 q-4.1 -4.0 -11.6 -5.6 M202 107 q3.0 -0.9 8.6 -0.8 M37 72 q-1.9 -0.3 -7.7 -1.9 M84 41 q-4.6 -4.5 -5.4 -12.2 M89 40 q-3.1 -5.4 -6.1 -12.5 M78 157 q-2.8 8.0 -7.6 12.9 M108 37 q-0.5 -4.4 0.2 -10.2 M186 63 q6.6 -2.9 10.3 -6.5 M53 55 q-4.9 -2.6 -6.5 -6.4 M202 97 q8.0 -0.2 14.1 -1.0 M34 123 q-8.7 3.3 -13.6 5.7 M29 108 q-3.4 2.2 -7.8 1.0 M112 163 q-1.7 2.6 -1.1 7.8 M187 65 q4.0 -1.8 9.4 -4.9 M143 160 q3.7 5.1 4.4 11.2 M40 69 q-3.4 -0.9 -9.4 -4.6 M94 39 q-2.3 -8.2 -4.2 -14.6 M134 161 q0.6 6.2 2.7 9.6 M201 93 q5.7 -3.3 8.4 -3.0 M93 39 q-3.7 -6.2 -3.6 -9.5 M31 118 q-4.2 -1.3 -5.6 1.0 M55 54 q-2.0 -1.5 -6.4 -6.7 M80 42 q-3.7 -4.6 -3.5 -9.0 M96 39 q-0.6 -4.2 -2.8 -8.7 M50 59 q-3.2 -5.1 -9.7 -6.9 M194 74 q5.3 -0.9 9.5 -5.1 M53 144 q-1.4 4.3 -6.3 8.9 M64 49 q-1.4 -1.9 -4.0 -5.6 M135 161 q2.6 8.6 5.0 14.9 M78 157 q-3.8 5.5 -4.3 11.5 M32 80 q-4.7 -4.6 -11.8 -5.7 M142 40 q-0.5 -4.7 1.9 -6.7 M28 93 q-3.5 -0.3 -10.6 -0.5 M198 80 q2.2 -0.2 6.1 -2.3 M59 52 q-3.5 -4.4 -5.5 -7.9 M164 48 q5.0 -4.7 6.3 -9.6 M37 72 q-3.3 -3.7 -7.4 -3.7 M200 88 q5.3 -0.4 10.0 -0.8 M83 41 q0.6 -2.0 -2.5 -7.3 M105 163 q-0.1 6.6 -2.7 10.0 M29 109 q-3.5 -0.6 -10.4 1.8 M131 38 q0.8 -4.8 0.1 -8.1 M62 150 q-5.8 5.0 -8.5 9.9 M115 163 q-0.5 3.7 0.1 8.1 M29 88 q-4.0 -0.4 -9.2 -1.0 M167 49 q5.0 -3.8 8.1 -10.1 M186 64 q2.3 0.2 6.8 -3.6 M181 59 q1.5 -3.7 5.0 -4.2 M158 45 q2.6 -4.3 6.1 -10.2 M201 107 q6.4 -0.2 9.1 2.6 M28 98 q-7.4 -1.6 -12.3 0.3 M183 139 q3.2 0.9 5.9 4.6 M150 158 q4.1 3.2 4.7 9.7 M195 124 q5.6 3.0 12.5 6.2 M28 94 q-4.0 -0.1 -9.6 -2.9 M151 157 q1.4 3.1 5.2 8.9 M28 95 q-1.9 1.8 -5.5 0.6 M55 54 q-1.2 -2.3 -6.4 -7.1 M110 163 q1.4 6.9 0.3 14.5 M184 62 q6.7 -3.8 11.3 -6.9 M100 38 q-2.9 -4.3 -1.9 -7.5 M59 52 q-3.5 -4.1 -8.4 -6.9 M68 47 q-0.9 -4.3 -5.8 -9.7 M89 40 q-0.4 -5.9 -1.8 -13.7 M111 163 q-1.6 2.7 -2.2 8.6 M115 163 q1.9 7.0 0.1 13.4 M202 98 q6.7 0.0 12.7 -2.0 M199 118 q4.5 1.8 11.6 3.7 M48 59 q-1.8 -2.1 -3.9 -5.1 M57 147 q-3.5 4.4 -5.4 7.0 M90 160 q-2.9 3.5 -3.0 5.0 M48 140 q-2.7 5.1 -9.2 6.7 M193 128 q7.7 1.9 11.7 5.9 M29 91 q-4.3 0.2 -12.5 -2.1 M46 62 q-4.0 -4.2 -5.7 -4.9 M29 89 q-4.2 -1.3 -8.0 -0.7 M39 69 q-1.8 -0.6 -7.5 -4.8 M106 37 q-0.1 -3.0 -2.4 -7.1 M60 149 q-2.1 4.1 -4.9 7.1 M117 37 q1.2 -1.7 -0.8 -6.4 M199 115 q3.6 -0.8 6.3 1.5 M31 84 q-4.3 -0.1 -8.9 -1.2 M54 145 q-3.2 4.7 -8.4 6.8 M193 128 q5.2 0.9 8.2 4.0 M38 129 q-2.7 3.7 -6.6 3.5 M75 156 q-2.3 5.1 -4.0 11.3 M186 136 q4.8 2.9 9.1 5.8 M81 42 q-2.4 -4.4 -2.5 -10.0 M191 131 q3.6 1.2 8.9 5.3 M60 149 q-3.2 4.2 -8.1 7.9 M191 69 q8.0 -4.2 13.5 -6.9 M79 157 q-2.2 4.7 -2.3 10.5 M57 147 q-4.6 3.6 -6.8 6.7 M140 40 q1.0 -4.0 4.5 -10.1 M179 57 q2.5 -2.8 4.7 -6.0 M200 87 q6.4 -0.9 12.5 -4.2 M190 132 q2.1 3.2 7.5 5.4 M169 150 q3.0 5.4 8.2 8.6 M29 91 q-4.5 -0.5 -12.7 -2.3 M28 103 q-3.3 0.3 -9.9 1.3 M155 44 q4.7 -3.0 6.8 -9.1 M199 83 q6.8 -1.4 11.2 -2.2 M39 130 q-3.5 1.6 -6.1 5.8 M140 160 q-0.8 5.0 2.0 11.4 M180 142 q3.1 3.0 9.8 6.3 M40 68 q-8.0 -5.3 -13.4 -8.3 M123 163 q-0.5 4.6 1.5 10.9 M156 156 q3.8 5.5 5.0 11.1 M109 163 q0.6 8.1 0.8 12.6 M29 107 q-3.9 0.9 -10.3 2.7 M29 89 q-5.0 -1.0 -11.4 0.1 M202 104 q5.7 1.4 9.8 1.9 M163 153 q3.3 3.0 3.7 5.8 M58 52 q-6.4 -4.1 -10.0 -10.4 M202 101 q5.4 -0.2 14.1 1.4 M97 38 q1.0 -3.5 -1.7 -7.6 M169 51 q5.1 -5.4 6.9 -7.5 M155 44 q0.7 -2.4 4.1 -7.4 M82 158 q-2.7 4.7 -5.1 7.7 M60 149 q-4.7 6.2 -9.1 8.7 M157 45 q2.6 -6.4 3.6 -10.6 M35 75 q-4.5 -2.2 -11.3 -2.0 M50 58 q-4.4 -3.6 -7.2 -5.9 M47 139 q-4.1 2.4 -10.1 6.1 M197 79 q6.9 -3.8 11.2 -4.4 M170 149 q1.5 3.0 5.6 6.8 M160 46 q0.7 -6.8 4.2 -10.6 M42 135 q-2.2 2.5 -4.6 3.9 M124 37 q0.1 -8.6 0.9 -13.4 M44 137 q-3.2 4.5 -7.7 8.1 M201 107 q2.7 0.4 8.6 1.7 M28 96 q-7.0 0.9 -11.2 -0.3 M186 64 q2.7 -2.2 8.3 -6.2 M202 95 q4.5 2.0 11.4 0.5 M54 55 q-3.5 -2.7 -7.5 -7.0 M73 155 q-5.0 7.8 -7.0 11.7 M172 147 q4.7 4.2 8.9 10.3 M188 66 q5.0 -2.3 13.0 -7.1 M94 161 q-0.8 5.3 -4.2 13.2 M32 81 q-2.6 0.0 -9.1 -3.5 M68 47 q-2.6 -3.0 -4.3 -6.7 M144 41 q-0.8 -3.9 1.2 -6.8 M36 73 q-3.4 -2.9 -7.4 -4.4 M60 51 q-0.1 -3.1 -3.9 -7.1 M30 112 q-3.6 2.3 -9.2 2.6 M28 106 q-6.6 1.1 -12.6 2.7 M35 75 q-6.3 -1.0 -12.1 -5.3 M78 157 q-0.2 4.5 -2.3 8.3 M116 37 q-1.3 -5.6 0.5 -10.9 M28 99 q-5.7 -0.7 -11.6 0.6 M85 159 q-0.6 5.6 -4.4 7.4 M71 46 q-4.6 -4.0 -6.9 -10.1 M36 74 q-8.4 -2.0 -13.8 -4.3 M198 81 q2.1 -3.2 5.7 -2.9 M184 61 q5.2 -6.0 9.6 -8.4 M200 112 q7.9 3.2 12.3 2.6 M29 111 q-3.0 0.3 -9.1 3.1 M161 46 q4.0 -2.7 4.9 -9.4 M141 160 q-0.7 4.6 2.2 12.4 M102 38 q1.0 -5.3 0.2 -7.6 M86 41 q-3.5 -8.0 -4.7 -14.5 M94 39 q-1.0 -3.4 -3.3 -9.2 M54 145 q-4.4 3.6 -6.6 8.7 M193 72 q3.1 -0.4 9.6 -4.6 M34 123 q-4.5 0.2 -9.8 2.1 M115 163 q0.2 4.9 -1.7 11.8 M99 162 q0.3 4.3 -3.2 12.2 M31 115 q-6.2 1.0 -12.4 4.6 M33 78 q-4.6 -1.6 -11.4 -3.3 M28 98 q-4.3 -1.5 -12.2 -0.4 M131 38 q0.7 -3.4 1.9 -9.1 M135 39 q-0.2 -5.8 1.8 -12.3 M28 100 q-3.1 1.9 -6.9 0.9 M152 157 q0.5 3.4 1.5 7.3 M108 163 q-1.1 7.3 -2.7 14.2 M137 39 q-1.4 -5.3 0.8 -9.1 M52 57 q-6.0 -2.2 -8.7 -7.0 M156 156 q2.7 5.4 2.8 8.5 M196 124 q6.2 -0.5 8.6 2.6 M28 104 q-5.4 0.7 -10.4 -0.6 M199 115 q4.6 -0.5 10.0 0.7 M38 129 q-3.2 3.7 -8.6 5.4 M126 162 q0.5 5.6 1.3 7.7 M58 148 q-4.0 3.4 -4.2 7.5 M64 49 q-1.0 -2.2 -5.0 -5.2 M181 59 q3.2 -1.5 7.3 -5.3 M134 162 q-1.0 3.5 0.8 9.4 M134 161 q2.7 5.6 1.5 9.8 M63 38 l4.6 -3.6 M45 32 l-1.5 -5.1 M58 33 l3.0 -5.7 M41 34 l-2.7 -4.3 M38 36 l-4.3 -4.2 M45 32 l-2.3 -8.4 M59 33 l3.1 -5.2 M44 32 l-1.9 -5.3 M65 40 l5.7 -2.9 M61 35 l4.9 -6.2 M65 39 l4.3 -2.6 M43 33 l-2.8 -5.9 M35 40 l-7.4 -4.3 M43 33 l-3.4 -7.3 M51 31 l0.3 -5.2 M46 32 l-1.6 -5.7 M34 41 l-5.1 -2.3 M54 31 l1.2 -5.0 M42 33 l-3.0 -6.0 M52 31 l0.6 -5.5 M58 33 l3.0 -5.2 M59 34 l4.1 -6.5 M37 37 l-4.5 -3.7 M41 34 l-4.1 -6.7 M46 31 l-1.5 -6.4 M64 38 l4.7 -3.6 M42 33 l-3.2 -5.5 M39 35 l-3.4 -3.9 M164 42 l-7.0 -2.8 M183 31 l1.4 -8.1 M196 42 l5.8 -2.3 M187 33 l3.6 -7.9 M169 35 l-5.1 -5.9 M187 32 l3.6 -8.1 M194 38 l4.7 -3.6 M186 32 l1.8 -5.1 M177 31 l-1.2 -6.5 M165 40 l-5.8 -2.9 M173 33 l-2.9 -6.3 M171 34 l-3.0 -4.8 M176 32 l-1.7 -6.7 M167 37 l-5.7 -5.1 M170 35 l-3.3 -4.3 M173 32 l-2.6 -6.2 M167 37 l-5.6 -4.7 M188 33 l3.5 -6.3 M188 33 l2.5 -4.5 M175 32 l-1.7 -6.2 M165 40 l-5.9 -3.0 M165 41 l-6.3 -3.0 M184 31 l1.5 -6.7 M173 33 l-2.6 -5.4 M164 42 l-5.9 -2.3 M194 39 l6.1 -4.0 M170 34 l-4.3 -6.3 M168 36 l-4.9 -4.8" fill="none" stroke="#7e9ad4" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+
+                <!-- fuzzy head + ears -->
+                <g filter="url(#fuzzy)">
+                    <circle cx="50" cy="48" r="19" fill="#7a97d2"/>
+                    <circle cx="180" cy="48" r="19" fill="#7a97d2"/>
+                    <circle cx="50" cy="49" r="9.5" fill="#b9a6dc" opacity="0.6"/>
+                    <circle cx="180" cy="49" r="9.5" fill="#b9a6dc" opacity="0.6"/>
+                    <ellipse cx="115" cy="100" rx="90" ry="66" fill="url(#fur)"/>
+                </g>
+
+                <!-- lighting + fur texture -->
+                <g clip-path="url(#headClip)">
+                    <ellipse cx="115" cy="100" rx="90" ry="66" fill="url(#shadeG)"/>
+                    <ellipse cx="115" cy="100" rx="90" ry="66" fill="url(#lightG)"/>
+                    <g fill="none" stroke-linecap="round">
+                        <path d="M60 70 q-2.4 0.9 -5.8 2.3 M57 72 q-3.6 1.8 -6.9 -0.3 M111 63 q-3.2 6.8 -5.5 10.6 M178 147 q3.4 3.7 4.0 6.2 M191 77 q5.5 1.1 7.1 5.6 M167 59 q5.2 -0.0 10.8 -0.4 M141 78 q2.3 3.1 8.0 5.8 M130 55 q6.7 2.1 10.6 2.0 M33 81 q-4.0 -1.3 -6.9 0.6 M167 109 q0.3 3.9 3.6 10.4 M52 139 q-5.5 6.2 -7.6 8.5 M134 150 q-2.2 5.8 -2.0 10.2 M105 103 q0.4 3.1 -0.2 7.9 M55 67 q-2.0 1.8 -5.5 4.0 M136 116 q-1.2 3.6 -1.4 9.6 M190 98 q2.0 2.6 5.5 6.0 M158 142 q2.3 4.6 5.3 9.5 M28 97 q-5.1 3.5 -8.0 6.3 M97 160 q1.0 5.4 0.6 11.1 M166 83 q3.0 1.9 6.4 7.2 M73 117 q-3.6 6.0 -5.5 10.4 M94 71 q-0.5 1.7 -4.1 5.4 M69 118 q-4.0 3.6 -8.7 6.9 M184 137 q3.1 2.8 7.2 3.9 M89 66 q-7.6 1.8 -11.4 2.5 M62 108 q-1.8 3.5 -5.0 6.1 M202 88 q3.8 3.9 5.1 6.7 M88 37 q-4.8 0.9 -8.8 0.5 M133 164 q0.3 3.3 3.5 7.4 M114 81 q1.9 5.7 2.9 9.5 M113 159 q-2.8 5.0 -2.6 10.3 M198 106 q0.9 4.4 5.6 9.9 M51 89 q-3.9 4.4 -6.2 8.8 M163 135 q2.6 1.3 5.0 4.2 M123 68 q0.3 2.6 2.8 5.7 M58 84 q-1.8 -0.7 -6.5 1.4 M179 91 q5.7 4.2 8.5 4.6 M107 104 q2.0 6.2 2.2 10.7 M151 140 q1.7 4.1 5.0 4.4 M63 52 q-5.3 1.2 -7.3 4.4 M181 141 q3.8 4.7 6.3 6.3 M179 84 q4.6 2.0 10.0 5.6 M112 67 q-0.2 3.7 -0.3 8.6 M60 119 q-2.9 5.5 -2.3 10.8 M61 88 q-2.5 1.9 -4.1 5.2 M72 103 q-5.5 2.4 -7.1 5.5 M122 99 q-0.2 6.3 0.6 11.7 M81 127 q-3.1 4.1 -4.7 8.3 M37 94 q-2.8 1.8 -3.6 5.5 M132 59 q1.6 4.1 5.0 6.8 M192 133 q0.8 4.9 3.1 7.3 M132 49 q3.1 -1.6 9.7 -4.2 M33 80 q-1.2 1.7 -6.0 1.4 M109 98 q-0.8 5.9 -3.0 8.0 M136 91 q1.8 3.8 1.5 8.5 M59 114 q-0.3 2.0 -2.5 7.5 M176 140 q0.4 2.7 3.8 8.5 M83 160 q-3.1 5.1 -3.9 10.9 M35 86 q-3.9 2.2 -7.7 8.2 M65 117 q-4.2 4.8 -8.3 8.0 M54 138 q-2.4 5.5 -2.1 10.2 M131 137 q2.3 3.6 4.0 7.1 M63 132 q-2.8 2.5 -6.4 5.1 M166 95 q1.2 3.9 4.3 6.0 M74 85 q-2.6 5.9 -4.3 10.1 M50 121 q-2.5 4.0 -8.3 8.4 M72 103 q-3.4 3.4 -5.3 4.0 M188 112 q2.6 1.9 6.6 6.6 M190 82 q3.6 1.1 4.9 4.4 M136 146 q1.4 3.7 0.7 6.7 M185 63 q5.6 2.4 7.6 3.1 M94 159 q-2.5 1.6 -3.1 6.9 M71 92 q-3.5 3.1 -4.1 6.3 M108 135 q2.1 3.1 1.3 9.0 M168 53 q5.5 1.1 9.1 1.9 M69 47 q-5.4 0.6 -7.2 -2.3 M63 144 q-1.5 5.2 -2.0 8.5 M175 84 q2.3 4.1 6.7 4.6 M182 141 q3.1 1.3 2.9 5.7 M86 91 q-2.0 0.1 -6.9 3.7 M103 85 q2.7 5.4 1.5 9.3 M164 54 q3.3 -0.8 6.4 0.9 M62 93 q-1.9 2.0 -5.4 4.7 M90 102 q-0.0 4.5 -3.9 8.5 M148 127 q4.4 6.2 5.4 8.7 M197 80 q2.4 3.8 8.6 7.8 M52 71 q-3.0 -0.5 -9.4 2.2 M27 92 q-0.5 4.5 -4.0 5.4 M131 102 q-0.1 5.4 -0.4 10.1 M119 41 q1.1 -1.3 -0.1 -6.4 M144 64 q1.9 2.4 7.6 2.6 M110 150 q0.4 3.8 -0.6 8.0 M123 162 q0.3 3.1 2.7 6.4 M126 63 q2.9 3.2 7.8 6.2 M112 162 q0.3 2.9 2.1 7.1 M104 46 q-5.9 -0.9 -8.4 -3.9 M116 131 q0.1 5.4 1.2 11.9 M191 65 q4.5 1.5 6.8 0.7 M73 150 q-0.7 4.7 -2.1 7.4 M35 109 q-2.4 2.3 -3.8 8.2 M144 87 q6.4 5.1 9.1 6.7 M68 153 q1.5 3.9 -0.7 10.3 M164 141 q2.3 5.0 1.0 10.3 M93 116 q-2.2 4.5 -0.9 11.6 M104 112 q-1.5 3.7 0.1 7.1 M49 88 q-2.6 -0.4 -8.8 2.5 M119 118 q3.0 5.1 2.6 10.2 M143 132 q2.1 5.7 1.9 7.5 M47 113 q-5.3 3.6 -8.0 3.6 M129 99 q-1.8 2.9 0.1 8.4 M151 150 q0.7 3.7 3.6 5.0 M42 100 q-4.7 1.4 -5.6 4.3 M159 109 q1.9 4.1 4.0 7.2 M93 136 q-3.1 4.0 -5.6 7.7 M65 109 q-1.6 3.1 -6.6 3.4 M142 82 q2.8 3.4 7.3 9.4 M108 68 q0.4 2.3 -2.9 6.3 M176 131 q3.3 5.0 6.6 6.6 M60 96 q-2.5 4.5 -3.1 8.4 M74 67 q-3.1 3.9 -6.0 6.7 M162 93 q3.7 1.1 4.9 4.3 M153 48 q5.6 -1.7 11.1 -2.7 M33 78 q-5.0 2.9 -8.3 3.1 M62 99 q-0.4 4.4 -3.5 6.4 M200 92 q5.1 4.5 8.5 6.6 M127 74 q-0.6 5.6 0.9 7.8 M179 107 q4.9 4.6 8.9 6.0 M181 78 q3.4 1.9 10.0 -0.1 M150 73 q5.9 3.5 9.7 3.2 M92 84 q-0.8 3.3 -4.5 4.4 M134 40 q6.0 -2.0 11.0 -4.0 M75 126 q1.2 2.4 0.0 7.0 M70 52 q-5.3 -1.4 -9.0 -0.9 M143 149 q-0.2 7.5 1.0 11.6 M156 81 q3.9 5.5 4.1 8.8 M91 130 q-3.2 5.7 -2.7 8.5 M55 90 q-4.7 1.7 -7.0 2.7 M118 138 q0.8 2.9 2.8 5.7 M183 83 q2.8 1.5 7.8 3.2 M145 94 q4.1 4.2 6.1 8.1 M60 50 q-3.4 0.7 -7.0 -2.6 M76 95 q-4.0 2.0 -5.2 3.7 M104 155 q-0.2 4.3 -2.5 7.5 M98 57 q-2.9 3.6 -5.6 3.6 M131 90 q3.5 2.4 5.5 5.3 M156 131 q1.6 5.5 3.9 9.7 M85 53 q-5.7 1.2 -8.4 6.0 M103 101 q0.8 2.5 1.8 8.2 M195 83 q3.7 3.8 8.8 3.7 M151 125 q3.7 3.9 7.4 8.4 M47 137 q-1.3 4.7 -4.3 9.8 M75 133 q-1.0 3.3 -3.0 7.3 M89 155 q0.7 4.2 -1.7 8.7 M54 144 q-5.0 3.4 -9.2 5.4 M112 64 q-1.6 6.1 -4.5 10.8 M48 121 q-2.2 6.7 -4.8 9.5 M74 147 q1.4 3.3 0.7 8.5 M83 80 q-5.0 6.3 -7.6 9.2 M179 118 q1.8 5.4 4.4 10.1 M96 44 q-5.2 -1.3 -8.5 -4.2 M53 82 q-2.3 -0.7 -6.8 0.1 M102 36 q-4.0 -2.3 -8.2 -4.6 M150 145 q-1.1 6.2 -0.4 10.0 M85 112 q-2.1 5.7 -4.5 7.5 M35 73 q-6.5 1.5 -9.5 4.6 M88 49 q-4.9 -1.8 -7.9 -2.4 M101 98 q-2.1 4.2 -1.4 9.8 M176 54 q2.0 -2.2 7.0 -1.0 M136 45 q5.0 -3.4 8.4 -3.1 M150 44 q5.5 -2.6 9.5 -3.9 M145 79 q2.6 4.0 5.7 5.5 M51 78 q-4.8 0.3 -7.3 -0.3 M167 152 q2.2 4.8 5.0 7.0 M179 72 q4.9 -1.0 8.1 0.3 M177 59 q3.0 0.4 8.1 -0.9 M187 116 q5.4 2.1 10.5 3.5 M131 108 q2.7 6.9 4.7 11.0 M142 108 q2.7 2.3 7.9 6.4 M78 52 q-5.1 1.5 -8.4 2.5 M82 131 q-1.5 1.9 -1.0 7.7 M89 147 q1.3 3.2 -0.1 6.7 M65 97 q-4.4 2.6 -9.7 4.0 M92 56 q-3.8 1.7 -7.5 3.6 M50 91 q-6.5 -0.2 -10.8 3.4 M110 111 q-2.6 3.3 -3.6 9.0 M171 56 q5.8 1.4 9.6 3.2 M62 129 q-3.2 4.8 -9.8 6.8 M155 115 q0.4 3.9 0.6 9.2 M157 64 q4.1 0.5 4.3 4.9 M149 133 q1.0 5.0 1.6 6.5 M43 123 q-4.9 3.0 -7.2 6.2 M175 68 q4.5 -0.5 8.7 0.4 M52 75 q-1.7 1.7 -4.6 5.7 M185 125 q4.9 2.0 9.2 7.3 M85 74 q-3.7 0.3 -9.5 4.1 M194 113 q1.5 -0.2 6.8 2.3 M28 111 q-1.3 1.5 -5.2 5.4 M68 61 q-2.8 -1.0 -6.2 -1.0 M135 70 q1.7 5.0 3.5 6.2 M118 135 q-3.6 3.4 -3.8 9.3 M119 135 q0.4 5.6 -3.0 9.7 M76 71 q-6.0 1.3 -8.5 2.7 M66 132 q1.7 2.6 -0.5 6.1 M98 122 q-3.1 5.5 -3.5 10.9 M36 100 q-4.5 2.7 -6.5 3.7 M189 129 q3.2 2.6 6.7 2.5 M58 61 q-7.0 1.1 -10.3 -0.4 M137 121 q3.6 1.8 4.2 4.5 M132 107 q1.3 2.9 -0.7 9.6 M152 123 q1.1 3.0 4.6 4.8 M133 124 q-0.6 4.3 1.6 8.1 M59 98 q-1.8 0.9 -4.5 4.3 M111 105 q-2.6 4.4 -4.3 8.5 M145 91 q2.9 4.6 6.8 7.6 M130 93 q3.0 4.5 4.0 6.6 M88 40 q-2.8 1.1 -8.4 0.1 M183 142 q1.5 5.6 4.2 10.4 M197 84 q7.0 4.0 10.0 5.3 M66 46 q-3.7 -0.1 -8.0 2.7 M119 84 q-0.7 4.3 -0.1 7.7 M137 141 q-1.7 5.4 -1.5 11.8 M101 73 q-2.5 1.7 -5.4 4.8 M118 100 q1.2 5.4 4.2 6.8 M100 87 q-2.1 4.0 -4.1 6.2 M169 50 q3.5 -0.9 7.9 -0.3 M112 55 q-0.8 4.7 -3.9 5.7 M136 150 q1.2 1.4 3.2 5.3 M107 50 q-7.6 -0.9 -11.7 1.3 M174 110 q2.3 6.0 4.3 9.1 M94 116 q-2.4 0.9 -2.6 5.6 M127 114 q0.9 4.6 1.0 6.7 M98 119 q-0.5 5.0 -4.2 9.5 M42 70 q-6.7 1.8 -11.8 1.3 M74 67 q-3.7 3.9 -5.4 7.0 M51 97 q-1.1 3.7 -3.1 6.0 M195 97 q4.1 2.7 8.2 2.9 M47 139 q-2.5 2.8 -4.9 6.8 M134 100 q2.1 1.5 2.9 5.8 M150 135 q1.2 4.3 2.9 10.2 M58 146 q0.8 2.9 -1.5 5.9 M137 118 q-2.2 5.9 -0.8 10.5 M129 143 q1.9 2.5 0.2 6.3 M164 146 q3.0 1.9 4.7 4.1 M180 66 q3.5 -0.2 6.3 -0.2 M88 160 q-1.4 6.6 0.5 9.8 M182 84 q6.5 2.7 9.9 3.1 M177 112 q6.0 3.4 8.4 4.0 M116 149 q1.6 4.5 1.3 6.9 M85 137 q-2.7 3.0 -5.2 9.0 M146 115 q1.0 3.9 0.9 8.9 M89 120 q-5.0 4.1 -7.0 6.6 M57 70 q-3.3 2.3 -9.6 0.9 M55 129 q-2.6 4.3 -4.2 7.4 M83 131 q-2.8 5.5 -7.1 8.2 M61 135 q-2.8 4.9 -2.4 7.5 M159 83 q1.4 2.3 5.7 3.5 M135 88 q2.4 5.5 6.9 8.0 M78 136 q-0.7 3.0 -0.8 7.7 M113 89 q-1.7 4.1 -2.0 10.6 M133 113 q-2.0 4.6 -0.2 9.6 M74 78 q-2.5 5.7 -3.9 7.6 M60 149 q-5.1 4.3 -7.2 6.1 M172 126 q2.4 0.3 5.6 3.4 M183 97 q4.1 5.6 6.1 10.0 M37 110 q-2.9 1.3 -6.1 3.3 M39 95 q-3.2 3.0 -8.8 3.3 M144 114 q4.5 1.5 5.3 4.5 M58 117 q-1.5 2.1 -5.3 5.6 M161 51 q2.6 -0.4 8.4 -3.9 M157 114 q2.1 4.2 2.8 9.1 M75 96 q-1.6 1.4 -4.6 6.0 M141 122 q-0.6 6.5 2.8 9.1 M143 65 q7.3 -0.2 10.7 2.2 M118 40 q1.1 -3.8 5.3 -4.9 M125 162 q-2.9 3.6 -2.8 8.4 M119 153 q-1.2 5.1 -1.9 10.5 M61 108 q-2.4 3.2 -6.4 7.8 M84 90 q-1.3 2.2 -1.6 8.2 M167 121 q-0.9 4.7 1.9 10.9 M81 127 q1.1 4.3 -0.4 9.5 M128 119 q2.2 5.1 6.5 8.3 M122 82 q3.0 4.4 3.8 6.9 M95 142 q0.9 3.5 -0.5 8.8 M147 41 q7.6 -1.9 11.7 -1.3 M155 98 q0.4 2.9 2.4 6.3 M154 54 q7.1 -0.8 11.3 -1.7 M161 111 q4.9 3.2 6.3 5.7 M125 84 q2.0 3.4 5.2 9.0 M134 106 q1.4 4.5 3.6 8.5 M112 108 q-0.9 3.4 -1.8 7.8 M112 115 q-0.9 2.0 1.3 7.7 M103 101 q-2.6 3.4 -4.7 6.7 M143 103 q0.9 4.0 1.8 9.2 M115 53 q0.5 6.3 -2.2 10.8 M87 60 q-4.3 3.0 -8.8 3.5 M128 88 q0.7 6.5 0.6 9.7 M174 114 q3.1 4.1 8.8 7.7 M163 145 q1.6 6.2 4.7 9.3 M158 101 q3.5 4.2 4.8 10.2 M181 127 q3.2 3.0 2.9 5.7 M176 110 q4.2 3.7 5.4 3.9 M158 131 q1.7 3.2 6.5 7.7 M63 124 q-0.7 5.8 -4.9 8.2 M183 67 q3.6 0.6 7.5 -0.0 M73 76 q-5.8 -1.3 -7.8 0.8 M134 155 q-1.6 2.1 -1.0 6.2 M134 39 q4.5 -0.2 5.2 -4.1 M102 56 q-5.0 0.6 -10.2 3.0 M43 92 q-5.1 5.1 -7.4 6.5 M125 130 q-0.2 6.9 -3.9 11.0 M162 51 q4.1 1.8 6.4 0.9 M125 88 q3.2 5.6 6.5 8.1 M175 97 q4.0 3.3 6.5 7.6 M100 87 q-2.4 3.6 -7.2 7.4 M132 143 q-1.6 2.7 -0.0 9.3 M79 120 q-1.0 4.4 -1.4 7.2 M178 72 q6.0 0.3 11.1 -1.3 M75 74 q-1.7 0.4 -4.8 4.3 M79 43 q-3.4 0.4 -9.2 -2.9 M149 39 q3.4 -0.3 5.8 -1.7 M161 61 q4.3 0.9 6.0 0.8 M184 95 q5.0 4.2 6.2 8.7 M160 75 q3.4 2.2 7.9 0.4 M78 121 q-2.8 2.2 -4.0 5.2 M164 136 q2.4 6.4 6.0 9.0 M137 145 q0.7 4.3 2.9 5.4 M99 145 q-0.6 2.0 -1.4 7.5 M87 129 q-2.4 4.6 -6.4 8.5 M167 58 q4.3 0.5 6.6 -1.7 M194 96 q5.1 1.4 9.2 1.9 M174 149 q3.8 2.8 3.8 6.6 M182 123 q2.2 2.5 6.0 4.2 M84 149 q-2.3 6.2 -7.7 9.1 M113 160 q0.1 2.8 3.7 8.8 M145 93 q-0.3 5.4 3.4 8.5 M194 123 q1.9 2.1 4.2 7.9 M109 88 q-0.2 4.2 -1.9 11.4 M101 46 q-5.0 -0.4 -10.6 -0.0 M68 94 q-3.7 5.8 -6.2 9.5 M89 121 q1.9 7.7 1.8 11.6 M96 91 q0.2 3.6 -0.5 6.3 M162 90 q1.9 -0.2 6.6 3.3 M57 102 q-4.5 5.8 -7.5 9.0 M87 96 q1.2 3.0 -0.6 9.6 M102 70 q-2.7 3.1 -7.3 8.2 M164 154 q0.3 4.0 0.2 11.5 M57 146 q-2.2 5.4 -0.8 7.7 M99 115 q-0.6 4.1 -0.6 7.2 M100 83 q-1.6 4.1 -2.7 5.7 M109 160 q2.0 2.1 1.7 8.2 M53 84 q-4.8 0.7 -11.1 3.6 M135 143 q0.3 5.0 3.8 8.5 M98 107 q1.9 7.3 1.1 11.6 M46 142 q0.2 3.8 -3.1 9.9 M147 101 q4.9 3.0 8.9 6.2 M169 135 q3.1 2.6 5.4 4.1 M141 43 q1.9 -2.1 6.7 -4.1 M198 111 q3.6 5.7 7.3 8.0 M157 48 q2.9 -0.7 6.9 2.2 M121 55 q0.5 5.3 1.6 7.6 M192 89 q2.8 4.9 7.4 8.8 M183 121 q-0.1 4.6 2.7 8.6 M171 118 q5.1 2.9 7.6 3.9 M152 64 q4.1 1.4 5.9 2.2 M86 114 q-2.7 1.3 -2.3 5.9 M85 111 q-1.9 3.7 -6.7 7.0 M140 129 q0.4 5.3 -0.3 9.5 M153 109 q5.0 4.8 6.5 8.9 M114 114 q1.4 3.0 -0.6 8.4 M118 108 q4.2 3.3 5.4 9.4 M183 105 q6.0 3.1 8.8 4.1 M102 150 q-0.5 6.7 0.9 10.5 M78 44 q-5.5 -0.7 -11.7 0.5 M85 71 q-1.2 1.6 -3.2 5.3 M179 134 q3.5 2.3 8.8 5.7 M190 75 q5.0 5.5 9.2 7.5 M66 65 q-3.3 1.0 -7.2 4.0 M62 52 q-5.5 -1.0 -7.3 -1.0 M39 124 q-2.9 3.3 -6.7 6.2 M86 56 q-5.1 0.5 -7.3 1.5" stroke="#3f5a9c" stroke-width="1.2" opacity="0.30"/>
+                        <path d="M181 58 q4.8 -0.5 9.4 -0.5 M150 153 q1.6 1.5 4.9 5.5 M124 117 q0.9 3.9 0.7 7.0 M71 68 q-3.8 1.9 -7.4 2.4 M132 155 q0.9 6.1 0.8 11.8 M121 65 q2.8 4.8 3.7 7.8 M150 159 q1.2 4.9 -1.6 8.8 M95 113 q1.8 5.2 1.8 9.4 M127 57 q3.5 4.0 6.0 7.5 M81 57 q-3.1 2.9 -7.8 6.3 M176 91 q3.8 -0.1 8.7 2.5 M144 82 q1.7 5.1 3.3 6.2 M186 132 q7.1 2.0 11.0 4.4 M75 66 q-3.2 4.3 -5.9 5.6 M165 132 q3.7 4.3 5.0 7.9 M76 158 q-1.4 4.9 -3.3 6.9 M184 115 q1.4 1.6 5.6 5.3 M61 116 q-2.2 2.6 -5.3 5.5 M138 43 q5.5 -3.3 10.6 -5.4 M113 156 q-0.8 6.5 0.4 10.1 M107 161 q0.3 4.3 -0.0 8.4 M51 85 q-6.8 2.3 -10.4 0.8 M136 101 q-1.7 2.5 0.4 7.6 M32 102 q-3.7 1.3 -3.4 6.1 M90 142 q-1.9 4.1 -6.6 7.4 M177 71 q4.0 -1.2 8.2 0.8 M171 79 q5.6 0.0 8.8 1.9 M92 90 q-0.9 4.2 -1.8 6.9 M126 154 q2.1 4.6 0.1 10.5 M176 99 q1.0 2.9 5.4 4.6 M128 107 q1.5 2.8 5.5 7.4 M121 56 q6.3 3.1 8.6 5.3 M53 116 q-3.3 2.2 -8.9 6.5 M120 79 q1.1 4.1 4.7 7.7 M96 163 q1.3 5.2 -1.0 10.8 M122 54 q3.4 3.5 5.6 3.7 M96 66 q-3.5 3.8 -6.1 5.3 M177 102 q3.5 1.3 5.2 4.6 M78 119 q-1.6 3.3 -4.7 7.2 M129 52 q3.5 -1.3 8.9 -1.0 M174 85 q2.9 1.0 4.8 5.0 M121 123 q4.9 4.3 6.0 9.8 M192 104 q3.3 0.5 4.4 4.5 M123 158 q-0.7 4.8 -1.4 7.3 M63 71 q-3.6 2.2 -4.8 4.3 M65 75 q-3.8 1.3 -8.8 3.2 M151 60 q5.9 4.9 9.1 7.6 M90 54 q-2.2 0.6 -5.8 3.2 M64 68 q-5.2 0.4 -8.3 2.3 M87 41 q-4.1 -0.5 -7.9 -0.4 M62 58 q-4.5 1.4 -10.8 -1.0 M58 114 q-1.7 2.2 -6.0 5.1 M54 83 q-3.3 1.8 -4.8 3.7 M147 93 q2.4 4.9 2.5 11.6 M199 107 q5.6 1.4 7.7 1.4 M152 46 q2.6 -2.1 8.4 -3.3 M34 102 q-4.9 2.6 -7.0 7.1 M179 118 q2.8 5.8 6.2 8.2 M103 51 q-4.3 -0.2 -7.0 -0.9 M44 62 q-1.4 -0.1 -6.3 0.1 M137 155 q0.6 4.6 0.8 11.1 M55 108 q-4.2 2.8 -5.6 7.6 M126 107 q0.4 6.8 1.6 10.3 M58 66 q-5.5 4.2 -9.9 5.7 M118 164 q0.4 2.1 -1.1 7.0 M73 127 q-2.6 3.5 -2.6 7.8 M182 133 q3.4 5.4 7.5 7.0 M170 62 q6.5 2.8 9.5 6.4 M95 90 q-0.7 1.8 -2.4 7.6 M116 82 q1.8 5.0 0.9 8.9 M159 143 q2.8 5.5 6.2 7.4 M70 111 q-3.0 4.3 -4.9 10.7 M43 88 q-3.9 1.1 -6.5 0.4 M40 102 q-4.8 0.1 -5.9 2.8 M102 127 q-1.7 3.4 0.3 6.7 M117 74 q0.7 3.2 4.7 9.2 M66 102 q-3.8 1.9 -7.7 4.7 M195 110 q3.1 2.6 9.3 5.7 M81 94 q0.5 7.7 -2.5 11.3 M41 84 q-5.5 2.1 -8.3 3.1 M46 119 q-2.8 4.7 -2.4 7.4 M67 105 q-4.6 2.1 -7.6 5.1 M137 100 q6.0 4.0 9.0 7.6 M177 82 q2.3 2.6 5.1 4.2 M54 129 q-3.5 4.3 -4.7 8.8 M56 121 q0.0 2.3 -1.7 7.3 M26 110 q-3.5 4.4 -9.1 5.0 M72 127 q-2.2 1.3 -4.2 4.5 M43 80 q-3.7 -1.4 -9.0 0.5 M68 46 q-4.4 -1.0 -8.8 -1.3 M132 126 q-2.2 5.0 -0.7 9.1 M150 53 q4.5 -0.9 11.5 -1.9 M80 107 q-2.4 1.6 -2.2 6.8 M70 57 q-5.6 2.4 -10.5 5.1 M180 77 q5.8 1.2 9.7 3.9 M185 124 q0.7 5.2 4.6 8.5 M151 153 q-0.7 4.3 2.1 9.6 M112 78 q2.9 4.5 2.9 8.0 M118 119 q-0.8 4.1 -3.2 10.6 M115 93 q3.1 1.9 2.6 7.5 M156 148 q-1.2 5.2 1.0 7.5 M199 88 q3.8 2.2 5.7 3.2 M153 50 q5.8 0.1 11.8 0.6 M63 56 q-6.7 1.9 -11.6 0.6 M153 73 q5.3 2.4 9.5 1.1 M43 80 q-2.8 0.3 -6.9 1.1 M125 134 q1.5 4.3 2.6 10.1 M190 120 q4.0 2.9 5.8 9.4 M103 144 q-0.7 3.5 0.9 10.9 M96 104 q1.1 4.9 1.4 9.5 M176 121 q1.3 1.7 4.9 6.1 M61 104 q-4.7 3.7 -7.6 6.6 M111 157 q2.2 5.8 2.4 9.2 M31 88 q-5.9 -1.2 -10.7 -0.5 M92 83 q-0.2 2.7 -1.6 6.4 M186 72 q3.1 -0.4 7.5 2.8 M179 140 q4.1 1.6 4.4 4.1 M124 56 q1.1 3.6 2.5 6.0 M200 110 q2.8 0.6 9.0 4.5 M183 130 q1.6 3.9 2.9 11.1 M126 54 q3.8 2.1 7.1 6.8 M131 115 q3.0 1.9 2.3 7.4 M117 77 q1.4 5.6 5.1 10.3 M66 79 q-1.8 1.7 -5.2 4.5 M49 65 q-3.9 4.4 -6.7 5.3 M86 80 q-1.9 0.6 -3.9 4.7 M157 136 q1.8 2.6 2.9 6.7 M109 86 q-3.4 3.0 -4.2 7.6 M96 85 q-3.2 0.6 -5.7 4.6 M30 118 q-1.7 3.5 -3.8 5.9 M141 124 q-1.1 4.4 1.7 7.2 M170 56 q2.4 2.2 6.4 3.5 M62 65 q-4.6 -0.7 -7.2 1.9 M179 118 q7.0 0.8 10.3 4.5 M184 89 q3.6 -0.6 8.3 0.3 M156 113 q3.7 1.1 7.5 4.4 M190 72 q4.6 2.6 10.3 3.2 M124 61 q0.1 3.5 2.9 7.6 M173 137 q4.5 3.4 6.6 6.1 M179 70 q5.3 4.2 9.1 5.1 M54 70 q-2.6 0.6 -8.8 2.7 M138 143 q2.7 2.7 4.3 9.4 M133 150 q1.3 3.3 2.8 9.7 M82 40 q-4.3 1.2 -9.6 1.5 M51 98 q-5.8 2.2 -11.1 2.0 M75 49 q-4.0 -2.6 -5.7 -3.0 M151 42 q5.6 -1.0 8.1 -3.7 M42 68 q-1.4 -1.4 -6.5 -1.0 M56 62 q-1.9 2.9 -7.1 3.4 M142 97 q3.8 5.7 3.9 9.7 M110 121 q1.2 2.9 1.9 7.3 M131 116 q-1.3 5.5 0.5 10.9 M169 95 q2.1 5.2 7.9 7.4 M127 44 q5.7 -3.8 7.9 -4.2 M178 126 q-0.5 3.2 1.5 6.7 M131 52 q1.7 1.6 5.8 2.4 M111 80 q0.7 3.1 2.2 7.6 M127 116 q0.7 7.5 0.3 11.7 M164 137 q3.7 4.9 6.6 8.9 M191 67 q2.6 -0.3 8.6 -1.0 M127 154 q2.3 1.4 1.5 5.8 M107 147 q2.8 3.4 3.8 9.9 M92 84 q-2.8 2.5 -3.8 5.4 M45 85 q-4.6 -0.9 -8.0 0.5 M111 60 q-0.5 4.9 -0.3 7.1 M40 123 q-4.2 3.1 -6.5 6.9 M111 81 q-1.1 3.1 -0.6 7.5 M137 147 q1.4 1.6 4.6 5.8 M153 53 q1.7 0.9 5.9 3.3 M33 97 q-7.4 -0.8 -10.9 2.2 M84 137 q-0.8 5.5 1.3 8.0 M128 136 q0.9 4.7 5.0 9.9 M123 132 q-1.0 4.2 -4.0 9.5 M203 91 q1.3 2.2 6.1 4.1 M32 105 q-6.5 2.5 -10.8 1.1 M102 92 q1.2 6.8 -0.1 11.8 M108 91 q-1.1 3.4 -4.4 6.4 M50 104 q-5.7 3.0 -10.6 3.1 M139 135 q1.0 0.8 2.7 5.7 M195 88 q1.9 2.5 5.7 2.8 M108 120 q-1.6 4.2 -0.3 9.5 M42 80 q-6.2 3.9 -10.4 5.8 M191 130 q3.5 4.2 4.5 5.4 M173 145 q1.5 4.9 0.6 8.1 M64 83 q-2.7 5.7 -7.7 7.7 M177 121 q-0.2 4.8 3.5 6.4 M130 45 q5.3 -3.1 8.1 -3.0 M102 45 q-5.2 0.6 -11.6 -2.0 M135 140 q2.8 6.1 3.7 8.2 M185 67 q4.8 1.9 7.6 7.1 M62 125 q-1.7 4.6 -2.3 11.2 M172 124 q4.8 3.7 8.5 8.0 M126 112 q-0.1 4.9 -0.2 9.7 M42 133 q0.2 2.8 -1.9 7.1 M86 138 q-2.2 5.5 -1.2 10.5 M103 62 q-2.7 0.9 -6.4 5.0 M87 145 q-3.5 4.2 -3.3 8.1 M146 74 q3.4 0.3 8.9 3.9 M179 123 q2.0 6.5 3.3 10.1 M142 72 q6.6 4.0 9.7 6.8 M79 72 q-3.3 3.9 -4.4 6.7 M75 57 q-4.1 -2.2 -5.9 -1.2 M56 146 q-3.9 4.1 -5.3 9.4 M130 66 q2.7 2.4 4.2 8.6 M58 150 q0.6 3.9 -2.9 7.1 M94 57 q-4.9 0.3 -8.0 2.3 M126 154 q1.7 4.9 3.3 5.8 M129 47 q3.6 -1.3 7.1 1.3 M99 99 q-0.4 3.3 0.5 6.7 M120 118 q4.5 6.9 5.1 10.5 M141 122 q-1.5 3.6 -0.2 6.1 M199 86 q3.8 4.5 5.7 5.5 M187 62 q5.6 2.0 9.6 4.7 M37 72 q-3.2 2.2 -6.0 1.4 M99 56 q-6.4 0.9 -10.5 0.2 M120 96 q-0.0 2.1 -2.8 8.1 M94 133 q1.4 5.6 0.4 9.9 M141 88 q4.1 3.9 5.9 6.0 M199 96 q5.7 2.8 8.9 5.5 M79 45 q-5.1 -0.6 -6.3 -2.8 M131 74 q-0.3 3.8 2.1 10.3 M76 56 q-6.0 4.3 -9.7 6.0 M144 92 q3.4 4.1 3.5 8.6 M78 117 q-1.3 0.8 -5.9 5.3 M125 94 q-0.8 6.2 -0.2 11.7 M95 109 q-1.5 1.7 -5.4 7.1 M137 127 q-2.0 2.6 -0.2 6.1 M52 140 q-2.1 1.6 -6.1 4.3 M122 47 q3.3 -2.7 7.3 -5.0 M45 81 q-2.6 3.1 -7.8 4.7 M127 123 q1.7 6.9 4.4 10.9 M188 88 q4.9 3.7 9.8 3.8 M43 100 q-5.7 2.3 -8.9 4.1 M48 124 q-3.6 1.0 -6.1 3.9 M176 89 q6.2 4.5 10.1 6.1 M83 100 q-1.8 2.8 -2.7 5.9 M27 108 q-4.2 2.6 -5.9 3.8 M58 96 q-2.5 3.1 -6.5 5.5 M175 114 q3.8 3.6 7.9 5.2 M191 87 q2.2 3.5 7.5 5.1 M133 138 q1.9 4.0 0.9 7.5 M128 98 q1.4 4.4 2.3 7.6 M42 65 q-2.9 1.4 -7.9 2.4 M105 163 q0.7 4.8 1.2 6.3 M165 53 q3.6 -0.4 8.9 1.9 M38 121 q-3.3 4.0 -9.0 7.7 M66 77 q-6.7 2.3 -10.9 1.4 M91 64 q-3.2 1.5 -8.0 3.0 M56 54 q-4.7 -0.4 -8.5 -2.6 M101 82 q-0.9 2.2 -2.9 7.1 M102 132 q1.7 5.3 0.6 9.4 M67 54 q-3.6 -0.2 -8.3 2.0 M117 37 q3.3 -3.9 3.2 -5.5 M163 138 q2.6 3.0 4.3 5.6 M52 89 q-3.9 3.2 -9.5 4.8 M144 60 q1.2 1.5 5.7 3.4 M97 71 q-3.5 1.5 -7.0 3.3 M150 95 q3.2 2.5 7.6 6.2 M173 147 q1.6 5.7 5.3 7.9 M174 134 q3.3 4.1 7.9 4.7 M39 123 q0.8 3.0 -2.4 7.0 M160 108 q2.7 2.5 6.4 6.5 M54 107 q-1.8 4.3 -4.2 8.1 M111 56 q-2.5 5.0 -2.0 11.5 M65 121 q-2.5 5.5 -3.4 10.6 M90 85 q-1.5 3.9 -3.4 5.9 M168 49 q4.8 -2.1 8.2 -3.1 M174 84 q1.5 3.3 3.9 5.1 M148 60 q3.6 4.3 8.0 6.9 M85 98 q-2.9 2.2 -9.0 6.5 M118 87 q0.3 3.4 0.6 7.8 M59 87 q-5.6 0.5 -9.4 3.3 M119 138 q1.6 6.4 1.1 9.0 M112 136 q0.4 1.2 -0.3 6.0 M58 72 q-6.0 1.0 -10.4 5.8 M150 120 q0.5 6.6 2.2 10.2 M137 127 q2.1 3.7 1.9 9.0 M173 70 q2.9 2.7 8.1 4.9 M125 97 q0.5 4.7 2.9 7.3 M95 81 q-5.6 2.2 -7.7 8.3 M47 63 q-4.8 1.0 -8.9 1.5 M174 73 q5.0 3.7 7.0 5.3 M66 98 q-2.7 3.3 -6.5 9.9 M57 94 q-1.6 2.0 -6.5 4.2 M137 70 q1.9 4.0 3.5 8.6 M178 82 q3.4 1.2 7.0 4.2 M72 112 q-2.6 4.7 -1.4 8.1 M186 135 q3.1 1.6 5.8 4.9 M107 64 q-4.2 3.5 -4.9 3.9 M98 69 q-3.0 1.8 -6.1 5.4 M45 87 q-3.4 0.9 -7.4 1.2 M159 67 q3.7 3.7 8.2 8.1 M182 90 q4.8 3.0 8.9 6.0 M90 72 q-1.0 3.6 -3.9 4.7 M107 35 q-1.7 -1.5 -1.9 -6.4 M181 139 q-0.0 4.2 2.2 6.5 M106 91 q0.6 3.6 -1.7 6.9 M171 103 q7.0 2.5 11.0 3.2 M202 101 q5.8 1.7 9.4 3.0 M148 122 q0.2 5.0 1.3 6.6" stroke="#8eaae0" stroke-width="1.4" opacity="0.55"/>
+                        <path d="M85 114 q-0.7 2.3 -3.6 5.7 M154 47 q3.4 -2.8 7.3 -2.6 M160 80 q3.8 3.7 4.0 3.5 M102 78 q-2.1 2.0 -4.0 6.2 M163 149 q2.4 3.7 2.9 8.2 M68 89 q-1.9 1.1 -6.1 3.8 M96 113 q-1.4 2.7 1.1 6.0 M54 143 q-2.2 6.2 -1.2 9.9 M87 125 q-3.4 1.6 -3.0 6.1 M82 49 q-1.7 -2.0 -5.6 -2.7 M68 97 q-4.0 3.4 -6.0 7.4 M166 76 q2.0 3.7 5.3 5.6 M83 67 q-1.3 1.0 -5.5 0.2 M100 56 q-1.9 2.1 -5.1 1.2 M50 131 q-1.8 2.4 -5.7 4.9 M162 133 q0.6 4.2 1.5 5.6 M198 105 q3.9 1.8 6.1 3.0 M107 125 q1.8 5.6 -0.3 9.4 M90 48 q-4.1 0.2 -5.4 -2.2 M180 106 q4.4 1.7 7.7 5.7 M172 118 q2.5 1.2 4.3 5.9 M63 146 q-2.1 4.6 -1.6 5.7 M154 69 q4.8 2.7 6.5 2.2 M195 82 q4.1 0.2 4.7 3.1 M111 61 q-0.2 5.6 1.5 8.2 M146 149 q0.1 1.7 1.9 4.9 M127 43 q1.8 -0.4 5.8 0.2 M98 127 q-1.0 0.8 -2.3 4.5 M96 133 q0.1 4.5 -1.7 9.5 M160 98 q4.6 2.9 7.1 4.1 M39 98 q-2.6 4.5 -7.2 6.6 M31 84 q-4.6 3.9 -8.8 4.2 M88 143 q0.1 5.1 -2.5 7.3 M146 150 q-0.6 5.0 1.9 6.8 M191 96 q1.5 0.9 4.4 3.2 M162 121 q0.6 1.2 4.6 5.4 M179 85 q3.0 0.9 7.0 1.9 M149 151 q1.4 5.3 -0.9 8.1 M52 89 q-4.9 1.1 -6.3 2.6 M145 51 q2.4 -1.6 8.5 -3.4 M137 132 q2.9 5.0 4.0 7.0 M93 99 q-1.3 1.4 0.3 5.4 M105 125 q-1.7 4.2 -3.1 6.0 M142 142 q4.2 3.0 5.0 5.5 M92 150 q-0.3 4.5 -1.7 7.3 M184 59 q4.4 3.8 7.4 5.2 M129 128 q-2.5 4.5 -1.2 7.1 M146 126 q1.2 2.0 -0.2 5.9 M130 61 q3.9 1.7 6.1 5.8 M98 76 q-2.7 3.9 -2.6 8.5 M167 133 q4.5 2.0 5.2 4.4 M99 100 q0.3 1.4 -0.4 5.5 M130 122 q-1.0 3.4 -0.3 8.3 M104 148 q-1.9 3.3 -1.0 5.6 M101 153 q-1.2 4.1 1.1 5.4 M103 98 q-1.5 5.4 -0.8 8.1 M180 101 q4.1 2.2 4.3 4.1 M168 142 q4.8 2.9 7.0 4.6 M138 102 q-0.6 6.3 0.6 9.2 M126 80 q-0.8 1.4 -0.2 5.1 M131 145 q1.7 4.7 5.7 8.0 M64 151 q-0.8 3.5 -3.7 6.5 M79 108 q-3.2 4.7 -6.0 5.5 M39 113 q-1.2 2.0 -3.4 5.9 M205 98 q2.5 3.7 6.8 5.3 M154 66 q2.6 0.1 7.3 3.9 M142 144 q-0.3 3.3 1.3 9.2 M83 113 q-0.1 2.1 -1.6 7.3 M143 140 q1.4 3.1 1.6 5.7 M201 85 q2.4 0.5 4.7 2.8 M111 118 q-1.9 2.9 -2.1 8.0 M182 98 q3.9 3.2 4.2 4.6 M85 99 q-2.3 3.4 -2.3 4.6 M146 119 q1.3 3.8 5.3 8.3 M96 97 q-1.8 1.7 -2.2 4.9 M175 99 q2.1 0.3 5.8 3.2 M85 150 q-2.3 4.2 -0.9 6.1 M101 133 q-2.2 2.6 -4.8 8.6 M155 51 q4.3 -1.4 5.9 -2.6 M155 159 q2.5 4.3 3.5 4.8 M112 91 q1.8 4.6 2.4 5.6 M170 136 q2.6 1.6 1.9 4.8 M59 142 q-4.0 3.9 -4.5 6.8 M163 148 q1.3 6.0 1.4 8.1 M151 51 q4.5 -1.9 5.1 -0.3 M182 114 q-0.1 1.5 2.2 6.9 M144 134 q3.0 4.8 2.9 5.6 M154 96 q1.2 2.6 2.7 5.1 M83 154 q1.0 5.0 -0.1 9.0 M143 111 q-0.5 5.5 1.1 9.7 M119 39 q-1.6 -2.2 0.3 -6.0 M68 143 q-1.4 3.8 -1.0 8.1 M41 65 q-5.6 1.0 -7.6 4.6 M106 82 q-3.7 4.8 -5.2 7.9 M62 47 q-1.9 -1.0 -6.8 -0.0 M161 79 q5.0 0.9 8.0 4.4 M67 45 q-3.3 1.0 -7.8 0.3 M72 126 q-1.4 5.1 -1.5 8.0 M190 116 q5.6 1.2 8.6 3.6 M149 118 q4.6 1.7 6.7 7.3 M182 103 q4.5 3.7 6.2 4.6 M174 149 q0.6 2.1 4.0 6.2 M134 132 q-0.4 1.5 1.1 6.2 M193 127 q1.2 4.4 5.4 4.8 M194 105 q3.1 0.3 6.4 1.0 M96 52 q-3.5 -0.9 -5.3 0.1 M57 105 q-2.9 0.8 -2.2 5.2 M62 48 q-2.5 -0.3 -6.0 -0.5 M98 158 q-1.5 2.2 0.6 6.5 M170 79 q1.8 1.9 5.5 5.0 M65 98 q-2.3 0.2 -3.7 3.6 M50 106 q-2.9 1.3 -8.9 3.0 M92 158 q-1.2 4.6 1.2 6.8 M112 37 q-1.6 -3.8 -4.7 -7.9 M39 121 q-1.7 2.9 -6.8 6.9 M58 90 q-4.9 0.5 -9.0 2.1 M85 149 q-1.7 4.3 -3.6 7.3 M177 102 q3.9 2.3 5.3 6.8 M194 71 q3.0 0.5 8.4 3.6 M128 147 q0.9 4.6 -1.7 6.5 M130 103 q0.2 5.1 -1.7 7.3 M111 108 q-2.4 5.0 -4.0 8.8 M202 105 q4.6 2.6 7.6 6.3 M143 143 q-0.2 2.7 -0.6 7.6 M141 126 q3.6 2.3 3.7 6.4 M126 156 q-1.8 2.6 -2.1 5.8 M140 107 q0.0 4.1 2.2 5.8 M48 106 q-2.0 4.2 -7.4 4.6 M174 137 q1.5 -0.1 4.9 2.7 M140 126 q-0.0 4.7 -0.0 8.9 M114 49 q-2.0 3.4 -1.7 7.1 M155 96 q3.7 1.8 6.0 5.1 M65 129 q-0.6 1.7 -4.4 2.9 M164 79 q0.8 2.3 3.8 3.4 M84 142 q-2.1 3.0 -5.6 5.4 M114 166 q-0.0 2.2 0.6 5.1 M131 142 q2.8 3.2 5.5 8.0 M49 85 q-3.9 4.3 -7.4 5.3 M123 45 q5.3 -1.4 6.7 -5.3 M161 110 q5.3 2.5 7.6 3.5 M81 58 q-2.7 -1.1 -7.7 0.5 M45 110 q0.1 1.9 -3.2 7.1 M107 44 q-2.7 -3.3 -6.6 -7.3 M56 107 q-1.4 2.3 -5.2 4.2 M56 119 q-2.4 3.7 -7.2 5.7 M115 101 q1.0 0.8 2.0 5.0 M38 110 q-4.0 3.1 -7.0 6.3 M112 124 q-1.7 2.0 -0.7 5.6 M103 35 q-0.8 -1.2 -5.4 -3.1 M141 37 q5.0 0.8 6.0 -1.5 M204 101 q2.3 1.2 4.8 3.9 M124 59 q3.5 0.8 8.4 4.3 M105 77 q-3.0 5.1 -3.1 6.5 M108 85 q-1.0 4.5 -4.6 6.8 M139 132 q4.4 4.0 5.2 7.4 M70 44 q-4.5 1.5 -7.2 -0.8 M143 120 q-1.1 2.7 0.1 5.1 M120 141 q0.4 2.8 4.2 7.2 M175 133 q1.2 2.7 6.1 4.8 M68 153 q1.1 1.5 -0.8 6.4 M52 103 q-1.8 0.5 -3.5 4.7 M163 102 q3.2 1.7 4.7 4.2 M61 68 q-4.5 1.5 -9.6 1.4 M92 94 q-4.6 3.6 -5.5 5.3 M27 99 q-1.4 3.8 -6.0 4.2 M123 56 q4.7 2.8 6.3 6.0 M95 53 q-3.9 -0.4 -6.0 1.1 M129 99 q2.9 3.2 3.2 5.1 M104 120 q-0.8 5.0 -2.7 8.3 M102 93 q-3.8 3.5 -5.0 7.9 M203 93 q1.9 4.8 6.5 6.5 M133 74 q2.5 6.0 1.8 8.9 M146 115 q-0.2 4.1 0.7 5.8 M142 63 q5.8 2.3 7.7 3.5 M90 127 q0.9 2.9 0.0 8.1 M112 49 q-4.1 -1.2 -7.5 1.5 M44 87 q-4.3 -0.8 -9.8 1.2 M152 67 q1.2 2.1 5.7 7.9 M185 117 q2.2 3.2 5.9 5.6 M149 117 q-0.9 3.6 1.4 6.0 M202 93 q0.8 1.9 5.6 6.5 M58 76 q-2.1 -1.4 -5.1 0.6 M116 80 q2.1 5.6 0.4 8.9 M125 65 q1.5 3.9 3.0 7.1 M63 114 q-1.4 4.2 -6.6 4.9 M124 79 q2.2 5.2 2.1 7.2 M118 106 q-2.2 5.1 -3.1 9.4 M73 127 q-0.9 2.9 -4.9 6.9 M55 102 q-2.0 2.8 -7.4 1.8 M193 110 q4.1 -0.6 7.2 2.1 M49 74 q-3.7 0.5 -6.6 3.9 M112 164 q0.6 5.1 -1.2 7.6 M117 58 q-1.2 5.0 1.1 6.5 M163 119 q2.4 1.3 1.6 6.4 M150 136 q2.7 5.6 2.2 8.7 M150 160 q1.9 0.8 5.0 5.3 M141 163 q1.2 4.2 -1.6 6.5 M183 111 q3.8 0.2 5.8 2.8 M111 104 q-1.2 1.6 0.7 6.5 M94 110 q-2.7 0.5 -4.4 4.5 M130 73 q4.4 3.7 5.6 4.0 M48 110 q-0.8 3.4 -3.7 8.8 M134 78 q2.1 1.7 3.6 5.3 M71 91 q0.3 2.4 -1.7 5.3 M42 96 q-2.4 3.2 -4.0 4.4 M108 56 q-0.6 2.6 -4.7 4.1 M133 62 q3.3 3.9 6.3 5.8 M104 158 q-1.1 3.4 0.6 7.6 M127 92 q2.7 4.0 4.2 6.5 M85 48 q-2.7 -1.1 -5.7 -0.5 M179 102 q2.5 3.9 2.8 6.8 M180 111 q0.4 5.6 2.5 7.9 M73 44 q-3.7 -1.6 -7.2 -3.3 M80 155 q-0.4 4.7 0.6 9.9 M76 77 q-0.8 -0.2 -4.6 2.7 M173 56 q2.7 2.1 8.0 3.6 M187 122 q1.2 1.0 2.8 5.4 M78 52 q-1.9 0.8 -6.9 4.2 M154 81 q3.7 -0.6 5.3 1.2 M153 66 q3.8 -1.3 9.1 0.3 M164 101 q3.0 1.0 5.3 5.3 M200 101 q5.4 2.4 7.6 4.0 M113 69 q2.6 5.6 1.3 7.5 M123 152 q0.1 5.2 1.9 6.5 M69 130 q-2.1 5.9 -0.9 9.2 M118 132 q3.4 2.4 3.2 6.0 M77 150 q1.5 5.8 -0.8 8.7 M192 115 q2.7 2.2 4.8 7.6 M85 55 q-5.6 0.5 -8.6 2.1 M57 54 q-5.3 -2.1 -8.7 -3.6 M55 93 q0.1 2.5 -3.3 6.0 M177 57 q6.6 -1.2 9.5 1.5 M41 65 q-4.5 2.9 -6.2 2.8 M51 80 q-4.4 1.9 -8.8 3.4 M66 112 q-3.7 0.1 -7.4 3.6 M103 89 q-1.2 1.8 -1.5 5.9 M125 143 q2.3 1.2 2.9 5.6 M148 65 q3.9 0.3 8.7 1.7 M153 100 q0.5 4.0 1.4 7.3 M145 114 q-0.5 5.5 0.5 8.1 M100 143 q-2.9 6.1 -4.0 8.4 M127 133 q0.6 3.7 0.9 7.8 M123 67 q3.5 2.8 3.8 7.5 M77 136 q1.1 2.7 -1.3 7.4 M156 46 q1.8 -0.0 6.7 -0.5 M146 66 q3.0 1.5 8.8 2.6 M122 53 q2.9 2.4 7.2 3.5 M138 43 q1.9 0.9 5.6 0.4 M59 53 q-4.3 -1.4 -5.2 0.8 M65 91 q-3.6 3.8 -3.7 8.8 M127 46 q4.2 -0.8 8.8 -4.2 M51 125 q-2.1 1.4 -4.8 2.2 M183 90 q2.9 -0.5 5.4 1.7 M63 152 q0.2 3.0 -0.9 6.0 M158 79 q4.2 4.4 4.5 5.5 M134 138 q1.2 4.3 1.7 7.2 M158 143 q-0.6 2.5 0.7 7.0 M91 86 q-0.2 4.1 -1.8 6.2 M82 93 q0.7 2.2 -2.5 4.7 M138 72 q1.9 2.3 4.8 3.1 M67 88 q-0.5 1.5 -3.1 5.6 M197 97 q3.8 -1.3 4.9 1.0 M84 59 q-5.5 2.7 -7.2 3.3 M124 89 q0.8 2.7 3.9 8.3 M145 38 q1.5 -1.4 5.9 1.0 M153 126 q-1.3 4.0 -0.0 8.8 M81 92 q-1.4 1.1 -1.3 5.8 M203 90 q3.5 2.8 6.6 2.9 M42 134 q-2.6 3.1 -5.9 2.5 M85 162 q-2.7 3.6 -2.1 8.1 M92 75 q-2.9 2.5 -6.4 2.8 M86 151 q-2.9 3.2 -4.3 7.8 M63 78 q-2.3 0.6 -6.7 4.1 M123 123 q2.0 1.8 0.5 6.0 M40 119 q-2.6 3.1 -3.0 4.5 M64 152 q-0.4 2.6 -0.7 6.5 M107 120 q-1.0 6.3 -1.0 8.7 M76 72 q-4.1 1.9 -4.9 4.1 M37 87 q0.0 1.4 -3.3 4.0 M102 39 q-1.6 -1.9 -5.5 -2.2" stroke="#eaf1ff" stroke-width="1.2" opacity="0.50"/>
+                    </g>
+                </g>
+                <path d="M52 62 Q70 30 115 30" fill="none" stroke="#fff" stroke-width="4" opacity="0.35" stroke-linecap="round" filter="url(#soft2)"/>
+                <path d="M96 38 Q104 20 110 38 Q116 18 122 38 Q128 22 134 40" fill="none" stroke="#7a97d2" stroke-width="5" stroke-linecap="round" filter="url(#fuzzy)"/>
+
+                <!-- eye sockets -->
+                <ellipse cx="80" cy="84" rx="36" ry="39" fill="#3f5ca3" opacity="0.5" filter="url(#soft2)"/>
+                <ellipse cx="150" cy="84" rx="36" ry="39" fill="#3f5ca3" opacity="0.5" filter="url(#soft2)"/>
+
+                <!-- eyes -->
+                <g class="eye-white">
+                    <ellipse cx="80" cy="82" rx="30" ry="33" fill="url(#eyeW)" stroke="#33497f" stroke-width="2"/>
+                    <ellipse cx="80" cy="66" rx="30" ry="30" fill="rgba(50,70,140,0.10)" clip-path="url(#eyeClipL)"/>
+                    <ellipse cx="80" cy="82" rx="30" ry="33" fill="none" stroke="rgba(30,45,100,0.15)" stroke-width="5" clip-path="url(#eyeClipL)"/>
+                    <g class="pupil" id="pupil1">
+                        <circle cx="80" cy="85" r="9.5" fill="url(#pupilG)"/>
+                        <circle cx="76.5" cy="81" r="3.4" fill="#fff"/>
+                        <circle cx="83.5" cy="89" r="1.6" fill="#fff" opacity="0.7"/>
+                    </g>
+                </g>
+                <g class="eye-white">
+                    <ellipse cx="150" cy="82" rx="30" ry="33" fill="url(#eyeW)" stroke="#33497f" stroke-width="2"/>
+                    <ellipse cx="150" cy="66" rx="30" ry="30" fill="rgba(50,70,140,0.10)" clip-path="url(#eyeClipR)"/>
+                    <ellipse cx="150" cy="82" rx="30" ry="33" fill="none" stroke="rgba(30,45,100,0.15)" stroke-width="5" clip-path="url(#eyeClipR)"/>
+                    <g class="pupil" id="pupil2">
+                        <circle cx="150" cy="85" r="9.5" fill="url(#pupilG)"/>
+                        <circle cx="146.5" cy="81" r="3.4" fill="#fff"/>
+                        <circle cx="153.5" cy="89" r="1.6" fill="#fff" opacity="0.7"/>
+                    </g>
+                </g>
+
+                <!-- eyelids -->
+                <ellipse class="eyelid l" cx="80" cy="82" rx="31.5" ry="34.5" fill="url(#fur)" stroke="#40599a" stroke-width="2"/>
+                <ellipse class="eyelid r" cx="150" cy="82" rx="31.5" ry="34.5" fill="url(#fur)" stroke="#40599a" stroke-width="2"/>
+                <path class="lid-line" d="M56 84 Q80 102 104 84" fill="none" stroke="#2a3f78" stroke-width="3.2" stroke-linecap="round"/>
+                <path class="lid-line" d="M126 84 Q150 102 174 84" fill="none" stroke="#2a3f78" stroke-width="3.2" stroke-linecap="round"/>
+
+                <!-- snout -->
+                <ellipse cx="115" cy="113" rx="36" ry="21" fill="url(#snout)"/>
+                <ellipse cx="115" cy="113" rx="36" ry="21" fill="none" stroke="#7f9cd6" stroke-width="1.2" opacity="0.6"/>
+                <g fill="#4a67ad" opacity="0.45">
+                    <circle cx="98" cy="112" r="1.2"/><circle cx="95" cy="116" r="1.2"/><circle cx="100" cy="117" r="1.2"/>
+                    <circle cx="132" cy="112" r="1.2"/><circle cx="135" cy="116" r="1.2"/><circle cx="130" cy="117" r="1.2"/>
+                </g>
+                <ellipse cx="115" cy="102" rx="11.5" ry="7" fill="url(#noseG)"/>
+                <ellipse cx="111" cy="99.6" rx="4.2" ry="2.1" fill="#fff" opacity="0.55"/>
+                <path d="M115 109 V120" stroke="#3d5596" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+
+                <!-- mouth -->
+                <path d="M66 117 Q115 168 164 117 Q115 129 66 117 Z" fill="url(#mouthG)" stroke="#120a18" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M72 119 Q115 133 158 119" fill="none" stroke="#000" stroke-width="3" opacity="0.35" filter="url(#soft2)"/>
+                <path d="M96 143 Q115 133 134 143 Q115 156 96 143 Z" fill="url(#tongueG)"/>
+                <path d="M115 140 V150" stroke="#b8445b" stroke-width="1.2" opacity="0.7"/>
+                <rect x="103.5" y="122" width="23" height="17" rx="4" fill="url(#toothG)" stroke="#c9d2e8" stroke-width="1"/>
+                <path d="M115 123 V138" stroke="#c3cce2" stroke-width="1.2"/>
+                <ellipse cx="108.5" cy="127" rx="2" ry="3.4" fill="#fff" opacity="0.7"/>
+                <path d="M64 118 Q60 112 66 108 M166 118 Q170 112 164 108" fill="none" stroke="#3d5596" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+                <!-- hands holding the card -->
+                <g>
+                    <ellipse cx="46" cy="158" rx="25" ry="15" fill="url(#fur)" filter="url(#fuzzy)"/>
+                    <path d="M30 150 l-3.8 -1.4 M27 153 l-5.6 -0.9 M34 151 l-3.6 -1.8 M36 161 l-5.6 5.3 M56 153 l4.9 -2.6 M54 159 l5.4 3.3 M41 165 l-2.5 8.5 M52 162 l2.8 5.8 M41 153 l-1.7 -1.6 M33 156 l-4.5 0.7 M28 158 l-5.6 2.2 M34 152 l-4.6 -2.6 M58 157 l4.9 1.0 M55 154 l4.6 -2.0 M40 149 l-2.3 -4.5 M50 154 l2.6 -3.2 M30 159 l-5.1 2.3 M42 168 l-1.2 7.5 M47 164 l0.4 7.0 M53 166 l1.9 5.9 M51 159 l4.0 3.7 M44 154 l-1.5 -3.1 M48 150 l0.6 -2.4 M60 150 l2.8 -1.1 M46 167 l-0.2 8.4 M31 164 l-3.7 5.0 M43 151 l-1.1 -2.9 M47 147 l0.4 -4.5 M33 155 l-5.6 -0.5 M32 150 l-4.6 -2.5 M56 163 l4.2 6.3 M47 163 l0.5 6.0 M28 152 l-5.9 -1.5 M58 165 l3.5 5.9 M37 152 l-4.6 -3.0 M51 158 l6.1 1.6 M49 160 l3.6 5.3 M43 146 l-0.5 -2.3 M44 160 l-2.7 6.9 M33 159 l-4.9 2.5 M52 148 l1.5 -2.6 M33 164 l-4.9 6.0 M60 157 l6.0 1.3 M27 155 l-4.3 0.7 M49 162 l3.1 8.1" fill="none" stroke="#dfe9ff" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+                    <ellipse cx="35" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="33.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="46" cy="150" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="44.8" cy="148.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="57" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="55.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/>
+                </g>
+                <g>
+                    <ellipse cx="184" cy="158" rx="25" ry="15" fill="url(#fur)" filter="url(#fuzzy)"/>
+                    <path d="M184 166 l-0.0 6.4 M183 159 l-2.5 7.1 M195 165 l3.0 5.8 M186 166 l0.7 7.0 M184 161 l-0.3 6.2 M194 154 l3.3 -0.6 M190 166 l2.9 8.4 M190 169 l1.6 7.2 M167 164 l-4.5 4.7 M199 161 l5.6 4.1 M176 154 l-4.9 -2.8 M198 149 l3.5 -2.0 M193 149 l2.3 -1.9 M193 159 l4.3 2.7 M196 161 l5.6 4.8 M178 166 l-1.5 5.7 M189 169 l1.0 5.9 M164 156 l-6.3 0.9 M183 150 l-0.6 -4.4 M193 149 l3.3 -4.1 M201 165 l4.2 5.1 M181 152 l-1.9 -4.5 M201 159 l4.6 2.7 M174 163 l-4.6 5.9 M189 151 l2.2 -3.5 M177 163 l-4.1 7.3 M181 161 l-2.2 6.5 M183 152 l-0.3 -4.2 M167 155 l-4.3 0.7 M191 161 l4.0 5.1 M182 158 l-5.0 4.3 M174 162 l-4.6 5.2 M194 156 l6.3 0.0 M176 167 l-1.9 5.9 M198 157 l6.9 1.5 M187 166 l1.2 8.0 M189 164 l2.6 7.4 M196 156 l4.3 0.5 M170 167 l-2.8 5.5 M175 152 l-3.9 -2.4 M188 167 l1.6 8.5 M195 151 l3.4 -2.3 M177 156 l-5.9 -0.7 M179 150 l-2.2 -3.6 M172 162 l-4.1 4.3" fill="none" stroke="#dfe9ff" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+                    <ellipse cx="173" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="171.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="184" cy="150" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="182.8" cy="148.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="195" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="193.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/>
+                </g>
+            </svg></div>
+            <div class="hero-card app-glass rounded-3xl p-6 pt-8 animate-card">
+                <p class="text-[11px] font-extrabold uppercase tracking-widest text-indigo-500">Student Dashboard</p>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mt-1 md:pr-72">Welcome back, <%= h(student_name) =%></h2>
+                <p class="text-sm text-slate-500 mt-1 md:pr-72">Upload a PDF, choose your print service, and we'll take care of the rest.</p>
+
+                <div class="service-grid grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="service-card app-glass rounded-2xl p-4 border-l-4 <%= 'border-rose-500' if gt_zero(total_due) else 'border-emerald-500' =%> bg-white/80 flex flex-col justify-between min-h-[154px]">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider"><%= 'Advance Balance' if is_credit else 'Payment' =%></p>
+                                <p class="text-xl font-black <%= 'text-rose-600' if has_due else 'text-emerald-600' =%> mt-1">Tk <%= number_format(php_abs(total_due), 2) =%></p>
+                                <p class="text-[11px] <%= 'text-slate-500' if has_due else 'text-emerald-600 font-semibold' =%> mt-1"><%= 'Clear your current due amount' if has_due else ('Extra paid. It will be used on your next order.' if is_credit else 'No due. You are all clear!') =%></p>
+                            </div>
+                            <div class="service-icon w-11 h-11 rounded-2xl bg-pink-50 text-[#E2136E] flex items-center justify-center shadow-sm shrink-0">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 9.5h7M8.5 13h4.5M15.5 16.5h.01"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <%PY if has_due PY%>                        <button onclick="openBkashModal()" class="mt-4 w-full bg-[#E2136E] hover:bg-[#c20f5c] text-white py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                            <img src="https://static.vecteezy.com/system/resources/previews/039/340/798/non_2x/bkash-logo-free-vector.jpg" alt="bKash" class="w-5 h-5 object-contain bg-white rounded-md p-0.5">
+                            Pay via bKash
+                        </button>
+                        <%PY else PY%>                        <div class="mt-4 w-full bg-emerald-50 text-emerald-700 border border-emerald-100 py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2">&#10003; Nothing to pay</div>
+                        <%PY endif PY%>                    </div>
+
+                    <div class="service-card app-glass rounded-2xl p-4 border-l-4 border-indigo-500 bg-white/80 flex flex-col justify-between min-h-[154px]">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Paper Service</p>
+                                <p class="text-xl font-black text-slate-800 mt-1">A4 Pages</p>
+                                <p class="text-[11px] text-indigo-600 font-bold mt-1">Blank / Margin · Tk 1/page</p>
+                            </div>
+                            <div class="service-icon w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 3.5V8h4M8 12h8M8 15.5h8"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <button onclick="openA4Modal()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            Order A4 Pages
+                        </button>
+                    </div>
+
+                    <div class="service-card app-glass rounded-2xl p-4 border-l-4 border-violet-500 bg-white/80 flex flex-col justify-between min-h-[154px]">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Finishing Service</p>
+                                <p class="text-xl font-black text-slate-800 mt-1">Cover Page</p>
+                                <p class="text-[11px] text-violet-600 font-bold mt-1">Tk 5/page · standalone order</p>
+                            </div>
+                            <div class="service-icon w-11 h-11 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center shadow-sm shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 3.5h7l3 3V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 3.5V7h3M9 11h6M9 14.5h6M9 18h3"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <button onclick="openCoverModal()" class="mt-4 w-full bg-violet-600 hover:bg-violet-700 text-white py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            Order Cover Page
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Place New Order Card -->
+            <div class="app-glass p-6 rounded-3xl animate-card flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2.5 mb-6 pb-3 border-b border-slate-100">
+                        <div class="bg-indigo-50 p-2.5 rounded-2xl text-indigo-600 shadow-sm flex items-center justify-center">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <h2 class="text-base font-bold text-slate-800">Place New Print Order</h2>
+                    </div>
+
+                    <form action="" method="POST" enctype="multipart/form-data" id="orderForm" class="space-y-4">
+                        <input type="hidden" name="form_type" value="pdf_order">
+                        
+                        <div>
+                            <label class="block text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2">1. Upload PDF Document</label>
+                            <div class="relative border-2 border-dashed border-indigo-200 rounded-2xl p-4 hover:border-indigo-600 transition-all bg-indigo-50/25 group cursor-pointer">
+                                <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <span id="fileNameDisplay" class="text-xs text-slate-500 font-medium truncate">Click or drag PDF file here</span>
+                                    <span class="bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-[11px] font-bold shadow-sm group-hover:bg-indigo-700 transition">Browse</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="printModeContainer" class="hidden animate-card space-y-2">
+                            <label class="block text-slate-500 text-[11px] font-bold uppercase tracking-wider">2. Select Print Mode</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="cursor-pointer relative block">
+                                    <input type="radio" name="print_mode" value="bw" checked class="sr-only" onchange="updatePageDisplayAndCost()">
+                                    <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                        <span>Black & White</span>
+                                        <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer relative block">
+                                    <input type="radio" name="print_mode" value="color" class="sr-only" onchange="updatePageDisplayAndCost()">
+                                    <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                        <span>Color Print</span>
+                                        <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div id="pageCountResult" class="mt-2.5 p-3 rounded-2xl text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 flex items-center gap-2">
+                                <svg class="w-4 h-4 animate-spin text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>Scanning PDF pages... Please wait.</span>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="server_file_path" id="server_file_path">
+                        <input type="hidden" name="original_file_name" id="original_file_name">
+                        <input type="hidden" name="hidden_total" id="hidden_total">
+                        <input type="hidden" name="hidden_color" id="hidden_color">
+                        <input type="hidden" name="hidden_bw" id="hidden_bw">
+
+                        <div>
+                            <label class="block text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2">3. Finishing Options</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="cursor-pointer relative block">
+                                    <input type="checkbox" name="cover_page" id="cover_page" value="Yes" class="sr-only" onchange="calculateEstimatedCost()">
+                                    <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                        <span>Cover Page</span>
+                                        <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                                    </div>
+                                </label>
+
+                                <label class="cursor-pointer relative block">
+                                    <input type="checkbox" name="binding_type" id="binding_type" value="Tape" class="sr-only" onchange="calculateEstimatedCost()">
+                                    <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                        <span>Tape Binding</span>
+                                        <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-900 text-white p-4 rounded-2xl flex justify-between items-center text-xs font-semibold shadow-md mt-4">
+                            <span class="text-indigo-200 uppercase tracking-wider font-bold text-[10px]">Estimated Total Cost:</span>
+                            <span id="estimatedCostDisplay" class="text-lg font-black text-white">Tk 0.00</span>
+                        </div>
+                        
+                        <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl transition-all shadow-md hover:shadow-lg font-bold text-xs cursor-pointer">
+                            Confirm Print Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order History Card with View Details, Redownload & Edit Options -->
+            <div class="app-glass p-6 rounded-3xl animate-card flex flex-col">
+                <div class="flex items-center gap-2.5 mb-6 pb-3 border-b border-slate-100">
+                    <div class="bg-indigo-50 p-2.5 rounded-2xl text-indigo-600 shadow-sm flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2v0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    <h2 class="text-base font-bold text-slate-800">Order History & Details</h2>
+                </div>
+                <div class="order-scroll overflow-x-auto overflow-y-auto max-h-[340px] rounded-2xl border border-slate-200 bg-white/80 shadow-inner flex-1">
+                    <table class="w-full text-left border-collapse min-w-[420px]">
+                        <thead>
+                            <tr class="bg-slate-100/80 text-slate-600 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                <th class="p-3.5">File Name / Item</th>
+                                <th class="p-3.5">Status</th>
+                                <th class="p-3.5 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-xs divide-y divide-slate-100">
+                            <%PY if orders|length > 0 PY%>                                <%PY for order in orders PY%>                                <tr class="hover:bg-indigo-50/30 transition">
+                                    <td class="p-3.5 font-medium text-slate-700 truncate max-w-[150px]" title="<%= h(order['file_name']) =%>">
+                                        <%= h(order['file_name']) =%>                                        <%PY set row_a4 = (nc(order, 'print_mode', '') != 'cover' and (nc(order, 'print_mode', '') == 'a4' or nc(order, 'file_path', '') == 'N/A')) PY%><%PY set row_bt = nc(order, 'binding_type', '') PY%><%PY if not row_a4 PY%><%PY if row_bt == 'Tape' PY%><%PY set bt_txt = 'Tape binding: Yes' PY%><%PY set bt_cls = 'bg-sky-100 text-sky-700' PY%><%PY else PY%><%PY set bt_txt = 'Tape binding: No' PY%><%PY set bt_cls = 'bg-slate-100 text-slate-500' PY%><%PY endif PY%>                                        <div class="mt-1 flex flex-wrap gap-1">
+                                            <%PY if nc(order, 'print_mode', '') != 'cover' PY%><%PY set pm = nc(order, 'print_mode', 'bw') PY%>                                            <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold <%= 'bg-fuchsia-100 text-fuchsia-700' if pm == 'color' else 'bg-slate-200 text-slate-700' =%>">Print: <%= 'Color' if pm == 'color' else 'B&amp;W' =%></span>
+                                            <%PY endif PY%>                                            <%PY if nc(order, 'print_mode', '') != 'cover' PY%><%PY set has_cv = (nc(order, 'cover_page', '') == 'Yes') PY%>                                            <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold <%= 'bg-violet-100 text-violet-700' if has_cv else 'bg-slate-100 text-slate-500' =%>">Cover page: <%= 'Yes' if has_cv else 'No' =%></span>
+                                            <%PY endif PY%>                                            <span class="inline-block px-2 py-0.5 rounded-lg text-[9px] font-extrabold <%= e(bt_cls) =%>"><%= e(bt_txt) =%></span>
+                                        </div>
+                                        <%PY endif PY%>                                    </td>
+                                    <td class="p-3.5">
+                                        <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold <%PY set st_l = strtolower(nc(order, 'order_status', 'Pending')) PY%><%= 'bg-emerald-100 text-emerald-800' if st_l == 'completed' else ('bg-sky-100 text-sky-800' if st_l == 'printing' else 'bg-amber-100 text-amber-800') =%> inline-block shadow-sm">
+                                            <%= h(nc(order, 'order_status', 'Pending')) =%>                                        </span>
+                                    </td>
+                                    <td class="p-3.5 text-center space-x-1">
+                                        <!-- View Details Button -->
+                                        <button type="button" onclick='openDetailsModal(<%= json_encode(order) =%>)' class="inline-flex items-center justify-center px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition font-bold text-[11px] cursor-pointer" title="View Details">
+                                            View Details
+                                        </button>
+
+                                        <!-- Redownload Button -->
+                                        <%PY if not empty(order['file_path']) and order['file_path'] != 'N/A' PY%>                                            <a href="dashboard.php?action=download&order_id=<%= e(order['id']) =%>" class="inline-flex items-center justify-center w-7 h-7 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg transition align-middle" title="Redownload File">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                            </a>
+                                        <%PY endif PY%>
+                                        <!-- Edit Button (Only for Pending Orders) -->
+                                        <%PY if strtolower(nc(order, 'order_status', 'Pending')) == 'pending' PY%>                                            <button type="button" onclick='openEditOrder(<%= json_encode(order) =%>)' class="inline-flex items-center justify-center w-7 h-7 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition align-middle cursor-pointer" title="Edit Order">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+                                        <%PY endif PY%>                                    </td>
+                                </tr>
+                                <%PY endfor PY%>                            <%PY else PY%>                                <tr>
+                                    <td colspan="3" class="p-12 text-center text-slate-400 font-medium text-xs">
+                                         No print orders yet. Your first one will show up here!
+                                    </td>
+                                </tr>
+                            <%PY endif PY%>                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Price List -->
+        <div class="app-glass p-6 rounded-3xl animate-card">
+            <div class="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
+                <div class="bg-indigo-50 p-2.5 rounded-2xl text-indigo-600 leading-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M6 12h12M6 17h7"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 15v6m-3-3h6"/></svg>
+                </div>
+                <h2 class="text-base font-extrabold text-slate-800">Price List</h2>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="price-card"><div class="text-indigo-600 mb-1"><svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6h14M5 12h14M5 18h14"/></svg></div><p class="text-xs font-extrabold text-slate-700">Black & White</p><p class="text-xl font-black text-indigo-600 mt-1">Tk 2</p><p class="text-[10px] font-semibold text-slate-400">per page</p></div>
+                <div class="price-card"><div class="text-indigo-600 mb-1"><svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path stroke-linecap="round" d="M12 4v8l5.5 5.5"/></svg></div><p class="text-xs font-extrabold text-slate-700">Color Print</p><p class="text-xl font-black text-indigo-600 mt-1">Tk 5</p><p class="text-[10px] font-semibold text-slate-400">per page</p></div>
+                <div class="price-card"><div class="text-indigo-600 mb-1"><svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 4h9l3 3v13H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 4v4h4"/></svg></div><p class="text-xs font-extrabold text-slate-700">Cover Page</p><p class="text-xl font-black text-indigo-600 mt-1">Tk 5</p><p class="text-[10px] font-semibold text-slate-400">one time</p></div>
+                <div class="price-card"><div class="text-indigo-600 mb-1"><svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12.5l6.2-6.2a3 3 0 0 1 4.2 4.2L11 17.9a4.2 4.2 0 0 1-6-6l7.5-7.5"/></svg></div><p class="text-xs font-extrabold text-slate-700">Tape Binding</p><p class="text-xl font-black text-indigo-600 mt-1">Tk 5</p><p class="text-[10px] font-semibold text-slate-400">one time</p></div>
+                <div class="price-card"><div class="text-indigo-600 mb-1"><svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3.5V8h4"/></svg></div><p class="text-xs font-extrabold text-slate-700">A4 Blank / Margin</p><p class="text-xl font-black text-indigo-600 mt-1">Tk 1</p><p class="text-[10px] font-semibold text-slate-400">per page</p></div>
+            </div>
+        </div>
+
+        <p class="text-center text-[11px] font-bold text-indigo-400 pt-2">Campus Print Hub &middot; Print smart, stay happy</p>
+    </div>
+
+    <!-- View Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl animate-card relative border border-slate-100">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Order Details</h3>
+                </div>
+                <button onclick="closeDetailsModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">
+                    &times;
+                </button>
+            </div>
+            
+            <div class="space-y-4 text-xs">
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="font-bold text-slate-500">File Name:</span>
+                    <span id="det_file_name" class="font-semibold text-slate-800 text-right truncate max-w-[200px]"></span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="font-bold text-slate-500">Order Date:</span>
+                    <span id="det_order_date" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100" id="det_paper_row" style="display:none;">
+                    <span class="font-bold text-slate-500">Paper Type:</span>
+                    <span id="det_paper_type" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100" id="det_print_type_row">
+                    <span class="font-bold text-slate-500">Print Type:</span>
+                    <span id="det_print_type" class="font-bold text-indigo-600"></span>
+                </div>
+                <div class="p-3 bg-violet-50 rounded-xl border border-violet-100" id="det_subjects_row" style="display:none;">
+                    <div class="font-bold text-slate-500 mb-2">Subjects & Cover Quantity:</div>
+                    <div id="det_subjects" class="space-y-1.5"></div>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="font-bold text-slate-500">Total Pages:</span>
+                    <span id="det_total_pages" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100" id="det_pages_row">
+                    <span class="font-bold text-slate-500" id="det_pages_label">Pages Breakdown:</span>
+                    <span id="det_color_pages" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100" id="det_cover_row">
+                    <span class="font-bold text-slate-500">Cover Page:</span>
+                    <span id="det_cover_page" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-50 rounded-xl border border-slate-100" id="det_binding_row">
+                    <span class="font-bold text-slate-500">Tape Binding:</span>
+                    <span id="det_binding_type" class="font-bold text-slate-800"></span>
+                </div>
+                <div class="flex justify-between p-3.5 bg-indigo-50 rounded-xl border border-indigo-100 text-sm">
+                    <span class="font-bold text-indigo-900">Total Cost:</span>
+                    <span id="det_total_amount" class="font-black text-indigo-700"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Order Modal -->
+    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl animate-card relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Edit Print Order</h3>
+                </div>
+                <button onclick="closeEditModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">
+                    &times;
+                </button>
+            </div>
+            
+            <form action="" method="POST" class="space-y-4">
+                <input type="hidden" name="form_type" value="edit_order">
+                <input type="hidden" name="edit_order_id" id="edit_order_id">
+                
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5 text-xs uppercase tracking-wider">Change PDF File (Optional):</label>
+                    <div class="relative border-2 border-dashed border-indigo-200 rounded-2xl p-3 hover:border-indigo-600 transition-all bg-indigo-50/25 group cursor-pointer">
+                        <input type="file" id="edit_pdf_file" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleEditFileChange(event)">
+                        <div class="flex items-center justify-between">
+                            <span id="editFileNameDisplay" class="text-xs text-slate-500 font-medium truncate">Keep current file or select new</span>
+                            <span class="bg-indigo-600 text-white px-3 py-1 rounded-xl text-[10px] font-bold shadow-sm group-hover:bg-indigo-700 transition">Browse</span>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="edit_server_file_path" id="edit_server_file_path">
+                <input type="hidden" name="edit_original_file_name" id="edit_original_file_name">
+                <input type="hidden" name="edit_hidden_total" id="edit_hidden_total">
+                <input type="hidden" name="edit_hidden_color" id="edit_hidden_color">
+                <input type="hidden" name="edit_hidden_bw" id="edit_hidden_bw">
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5 text-xs uppercase tracking-wider">Current File / Item:</label>
+                    <input type="text" id="edit_file_name" readonly class="w-full p-3.5 border border-slate-200 rounded-2xl bg-slate-100 font-semibold text-xs text-slate-600">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5 text-xs uppercase tracking-wider">Print Mode:</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer relative block">
+                            <input type="radio" name="edit_print_mode" value="bw" id="edit_mode_bw" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Black & White</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer relative block">
+                            <input type="radio" name="edit_print_mode" value="color" id="edit_mode_color" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Color Print</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="editPageCountResult" class="p-3 rounded-2xl text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 flex items-center gap-2">
+                    <span>Scanning PDF pages... Please wait.</span>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1.5 text-xs uppercase tracking-wider">Finishing Options:</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer relative block">
+                            <input type="checkbox" name="edit_cover_page" id="edit_cover_page" value="Yes" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Cover Page</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+
+                        <label class="cursor-pointer relative block">
+                            <input type="checkbox" name="edit_binding_type" id="edit_binding_type" value="Tape" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Tape Binding</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-900 text-white p-4 rounded-2xl flex justify-between items-center text-xs font-semibold shadow-md">
+                    <span class="text-indigo-200 uppercase tracking-wider font-bold text-[10px]">Estimated Total Cost:</span>
+                    <span id="editEstimatedCostDisplay" class="text-lg font-black text-white">Tk 0.00</span>
+                </div>
+
+                <button type="submit" id="editSaveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-extrabold text-sm transition-all shadow-md cursor-pointer mt-2">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- A4 Page Order Modal -->
+    <div id="a4Modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl animate-card relative border border-slate-100">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Order A4 Pages</h3>
+                </div>
+                <button onclick="closeA4Modal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">
+                    &times;
+                </button>
+            </div>
+            
+            <form action="" method="POST" class="space-y-5">
+                <input type="hidden" name="form_type" value="a4_page_order">
+                
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Select Paper Type:</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer relative block">
+                            <input type="radio" name="a4_type" value="Blank Page" checked class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Blank Page</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer relative block">
+                            <input type="radio" name="a4_type" value="Margin Page" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Margin Page</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Enter Quantity (1 Tk / Page):</label>
+                    <input type="number" name="a4_quantity" id="a4_quantity" min="1" value="1" required oninput="calculateA4Cost()" class="w-full p-4 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-600 font-bold text-sm text-slate-800 bg-slate-50/50">
+                </div>
+
+                <div class="bg-indigo-50 p-4 rounded-2xl flex justify-between items-center text-xs font-semibold text-indigo-900 border border-indigo-100">
+                    <span>Total Cost:</span>
+                    <span id="a4TotalCostDisplay" class="text-base font-black text-indigo-700">Tk 1.00</span>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm transition-all shadow-md cursor-pointer">
+                    Confirm A4 Order
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit A4 Page Order Modal -->
+    <div id="a4EditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl animate-card relative border border-slate-100">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Edit A4 Page Order</h3>
+                </div>
+                <button type="button" onclick="closeA4EditModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">
+                    &times;
+                </button>
+            </div>
+
+            <form action="" method="POST" class="space-y-5">
+                <input type="hidden" name="form_type" value="edit_a4_order">
+                <input type="hidden" name="a4_edit_order_id" id="a4_edit_order_id">
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Select Paper Type:</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer relative block">
+                            <input type="radio" name="a4_edit_type" value="Blank Page" id="a4_edit_type_blank" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Blank Page</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer relative block">
+                            <input type="radio" name="a4_edit_type" value="Margin Page" id="a4_edit_type_margin" class="sr-only">
+                            <div class="select-card border border-slate-200 bg-white p-3.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm flex items-center justify-between">
+                                <span>Margin Page</span>
+                                <span class="select-indicator w-4 h-4 rounded-lg border border-slate-300 flex items-center justify-center text-[10px] text-transparent transition">✓</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Quantity (1 Tk / Page):</label>
+                    <input type="number" name="a4_edit_quantity" id="a4_edit_quantity" min="1" value="1" required oninput="calculateA4EditCost()" class="w-full p-4 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-600 font-bold text-sm text-slate-800 bg-slate-50/50">
+                </div>
+
+                <div class="bg-indigo-50 p-4 rounded-2xl flex justify-between items-center text-xs font-semibold text-indigo-900 border border-indigo-100">
+                    <span>Total Cost:</span>
+                    <span id="a4EditTotalCostDisplay" class="text-base font-black text-indigo-700">Tk 1.00</span>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm transition-all shadow-md cursor-pointer">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cover Page Order Modal -->
+    <div id="coverModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-7 sm:p-8 shadow-2xl animate-card relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-violet-50 p-2.5 rounded-xl text-violet-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3.5h7l3 3V20a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3.5V7h3M9 11h6M9 14.5h6M9 18h3"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Order Cover Pages</h3>
+                        <p class="text-[11px] text-violet-600 font-semibold">Multiple subjects • Tk 5 per cover</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCoverModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">&times;</button>
+            </div>
+
+            <form action="" method="POST" class="space-y-5" id="coverOrderForm" onsubmit="return validateCoverOrderForm(event);">
+                <input type="hidden" name="form_type" value="cover_page_order">
+                <div class="grid grid-cols-[1fr_118px] gap-2.5 px-1 mb-1">
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-500">Subject Name</div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 text-center">Quantity (Pcs)</div>
+                </div>
+                <div id="coverSubjectRows" class="space-y-3"></div>
+
+                <button type="button" onclick="addCoverSubjectRow()" class="w-full border-2 border-dashed border-violet-200 hover:border-violet-400 hover:bg-violet-50 text-violet-700 py-3 rounded-2xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+                    Add Another Subject
+                </button>
+
+                <label class="flex items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 cursor-pointer transition-all">
+                    <div>
+                        <div class="font-extrabold text-sm text-slate-800">Tape Binding</div>
+                        <div class="text-[10px] font-semibold text-slate-500">Tape binding • Tk 5 per cover page</div>
+                    </div>
+                    <input type="checkbox" name="cover_binding_type" id="cover_binding_type" value="Tape" class="sr-only" onchange="calculateCoverCost()">
+                    <span id="coverBindingToggle" class="w-11 h-6 rounded-full bg-slate-200 relative transition-all shrink-0">
+                        <span class="absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all"></span>
+                    </span>
+                </label>
+
+                <div class="bg-violet-50 p-4 rounded-2xl border border-violet-100 space-y-1.5">
+                    <div class="flex justify-between items-center text-xs font-semibold text-violet-900">
+                        <span>Total Cover Pages</span><span id="coverTotalQtyDisplay" class="font-black">0 Pcs</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-semibold text-violet-900">
+                        <span>Total Cost</span><span id="coverTotalCostDisplay" class="text-base font-black text-violet-700">Tk 0.00</span>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-violet-600 hover:bg-violet-700 text-white py-4 rounded-2xl font-extrabold text-sm transition-all shadow-md cursor-pointer">Confirm Cover Order</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Cover Page Order Modal -->
+    <div id="coverEditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-7 sm:p-8 shadow-2xl animate-card relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="bg-violet-50 p-2.5 rounded-xl text-violet-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Edit Cover Page Order</h3>
+                        <p class="text-[11px] text-violet-600 font-semibold">Update all subjects in this order</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCoverEditModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">&times;</button>
+            </div>
+
+            <form action="" method="POST" class="space-y-5" onsubmit="return validateEditCoverOrderForm(event);">
+                <input type="hidden" name="form_type" value="edit_cover_order">
+                <input type="hidden" name="cover_edit_order_id" id="cover_edit_order_id">
+                <div class="grid grid-cols-[1fr_118px] gap-2.5 px-1 mb-1">
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-500">Subject Name</div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 text-center">Quantity (Pcs)</div>
+                </div>
+                <div id="editCoverSubjectRows" class="space-y-3"></div>
+
+                <button type="button" onclick="addEditCoverSubjectRow()" class="w-full border-2 border-dashed border-violet-200 hover:border-violet-400 hover:bg-violet-50 text-violet-700 py-3 rounded-2xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+                    Add Another Subject
+                </button>
+
+                <label class="flex items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 cursor-pointer transition-all">
+                    <div>
+                        <div class="font-extrabold text-sm text-slate-800">Tape Binding</div>
+                        <div class="text-[10px] font-semibold text-slate-500">Tape binding • Tk 5 per cover page</div>
+                    </div>
+                    <input type="checkbox" name="edit_cover_binding_type" id="edit_cover_binding_type" value="Tape" class="sr-only" onchange="calculateEditCoverCost()">
+                    <span id="editCoverBindingToggle" class="w-11 h-6 rounded-full bg-slate-200 relative transition-all shrink-0">
+                        <span class="absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all"></span>
+                    </span>
+                </label>
+
+                <div class="bg-violet-50 p-4 rounded-2xl border border-violet-100 space-y-1.5">
+                    <div class="flex justify-between items-center text-xs font-semibold text-violet-900">
+                        <span>Total Cover Pages</span><span id="editCoverTotalQtyDisplay" class="font-black">0 Pcs</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-semibold text-violet-900">
+                        <span>Total Cost</span><span id="editCoverTotalCostDisplay" class="text-base font-black text-violet-700">Tk 0.00</span>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-violet-600 hover:bg-violet-700 text-white py-4 rounded-2xl font-extrabold text-sm transition-all shadow-md cursor-pointer">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- bKash Payment Modal -->
+    <div id="bkashModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl animate-card relative border border-slate-100">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <img src="https://static.vecteezy.com/system/resources/previews/039/340/798/non_2x/bkash-logo-free-vector.jpg" alt="bKash" class="w-10 h-10 object-contain bg-white rounded-xl p-1 border border-slate-100 shadow-sm">
+                    <h3 class="font-extrabold text-xl text-slate-800 tracking-tight">Pay via bKash</h3>
+                </div>
+                <button onclick="closeBkashModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-600 hover:text-white flex items-center justify-center text-lg font-black transition-all cursor-pointer">
+                    &times;
+                </button>
+            </div>
+            
+            <div class="space-y-6 text-sm">
+                <div class="bg-pink-50 p-5 rounded-2xl border border-pink-100 text-pink-900 space-y-1.5 shadow-sm">
+                    <p class="font-bold text-xs uppercase tracking-wider text-pink-700">Total Due Amount:</p>
+                    <p class="text-3xl font-black text-[#E2136E]">Tk <%= number_format(php_max(0, floatval(total_due)), 2) =%></p>
+                </div>
+                
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">bKash Personal Number:</label>
+                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 text-base tracking-wider flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <span id="bkashNumberText" class="font-mono text-lg text-slate-800">01959048904</span>
+                            <button onclick="copyBkashNumber()" id="copyBtn" class="bg-[#E2136E] hover:bg-[#c20f5c] text-white px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5">
+                                <span id="copyText">Copy</span>
+                            </button>
+                        </div>
+                        <span class="text-xs font-extrabold text-[#E2136E] bg-pink-100 px-3 py-1.5 rounded-xl text-center">Please Send Money</span>
+                    </div>
+                </div>
+
+                <form action="process_payment.php" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Enter Transaction ID (TrxID):</label>
+                        <input type="text" name="trx_id" required placeholder="e.g. 9G74XYZ123" class="w-full p-4 border border-slate-200 rounded-2xl focus:outline-none focus:border-[#E2136E] font-semibold uppercase text-sm tracking-wider text-slate-800 bg-slate-50/50">
+                    </div>
+                    <button type="submit" class="w-full bg-[#E2136E] hover:bg-[#c20f5c] text-white py-4 rounded-2xl font-extrabold text-sm transition-all shadow-md cursor-pointer">
+                        Verify & Pay Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scannedPdfData = null;
+        let editScannedData = null;
+
+        function openA4Modal() { document.getElementById('a4Modal').classList.remove('hidden'); }
+        function closeA4Modal() { document.getElementById('a4Modal').classList.add('hidden'); }
+        function openCoverModal() {
+            const modal = document.getElementById('coverModal');
+            const rows = document.getElementById('coverSubjectRows');
+            if (!rows.children.length) addCoverSubjectRow();
+            modal.classList.remove('hidden');
+            calculateCoverCost();
+        }
+        function closeCoverModal() { document.getElementById('coverModal').classList.add('hidden'); }
+
+        function escapeHtmlAttr(value) {
+            return String(value ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = String(value ?? '');
+            return div.innerHTML;
+        }
+
+        function hasBlankCoverSubject(containerId) {
+            const inputs = document.querySelectorAll('#' + containerId + ' .cover-subject-name');
+            for (const input of inputs) {
+                if (!input.value.trim()) {
+                    input.focus();
+                    input.classList.add('border-rose-400', 'ring-2', 'ring-rose-100');
+                    setTimeout(() => input.classList.remove('border-rose-400', 'ring-2', 'ring-rose-100'), 1400);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function updateCoverBindingToggle(checkboxId, toggleId) {
+            const cb = document.getElementById(checkboxId);
+            const toggle = document.getElementById(toggleId);
+            if (!cb || !toggle) return;
+            const knob = toggle.querySelector('span');
+            toggle.classList.toggle('bg-violet-600', cb.checked);
+            toggle.classList.toggle('bg-slate-200', !cb.checked);
+            knob.classList.toggle('translate-x-5', cb.checked);
+        }
+
+        function addCoverSubjectRow(subject = '', quantity = 1) {
+            const rows = document.getElementById('coverSubjectRows');
+            if (rows.children.length && hasBlankCoverSubject('coverSubjectRows')) return;
+            const row = document.createElement('div');
+            row.className = 'cover-subject-row bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 shadow-sm';
+            row.innerHTML = `
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-violet-600 cover-row-title">Subject ${rows.children.length + 1}</span>
+                    <button type="button" onclick="removeCoverSubjectRow(this)" class="cover-remove-btn w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition cursor-pointer" title="Remove subject">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-[1fr_120px] gap-2.5 items-stretch">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1.5">Subject Name</label>
+                        <input type="text" name="cover_subject_name[]" value="${escapeHtmlAttr(subject)}" placeholder="Enter subject name" required oninput="this.classList.remove('border-rose-400')" class="cover-subject-name w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:border-violet-500 font-semibold text-sm text-slate-800 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1.5 text-center">Quantity (Pcs)</label>
+                        <div class="flex items-center h-[50px] border border-slate-200 rounded-xl bg-white overflow-hidden">
+                            <button type="button" onclick="changeCoverQuantity(this,-1)" class="w-8 h-full text-lg font-black text-slate-500 hover:bg-violet-50 hover:text-violet-700 transition cursor-pointer">−</button>
+                            <input type="number" name="cover_subject_quantity[]" value="${Math.max(1, parseInt(quantity) || 1)}" min="1" required oninput="calculateCoverCost()" class="cover-subject-qty w-full h-full text-center border-x border-slate-100 outline-none font-black text-sm text-slate-800 bg-white">
+                            <button type="button" onclick="changeCoverQuantity(this,1)" class="w-8 h-full text-lg font-black text-slate-500 hover:bg-violet-50 hover:text-violet-700 transition cursor-pointer">+</button>
+                        </div>
+                    </div>
+                </div>`;
+            rows.appendChild(row);
+            refreshCoverRowTitles(rows);
+            calculateCoverCost();
+        }
+        function changeCoverQuantity(button, delta) {
+            const input = button.parentElement.querySelector('input');
+            input.value = Math.max(1, (parseInt(input.value) || 1) + delta);
+            calculateCoverCost();
+        }
+        function removeCoverSubjectRow(button) {
+            const rows = document.getElementById('coverSubjectRows');
+            button.closest('.cover-subject-row').remove();
+            if (!rows.children.length) addCoverSubjectRow();
+            refreshCoverRowTitles(rows);
+            calculateCoverCost();
+        }
+        function refreshCoverRowTitles(container) {
+            Array.from(container.querySelectorAll('.cover-row-title')).forEach((el, i) => el.innerText = 'Subject ' + (i + 1));
+        }
+        function calculateCoverCost() {
+            let total = 0;
+            document.querySelectorAll('#coverSubjectRows .cover-subject-qty').forEach(el => total += Math.max(0, parseInt(el.value) || 0));
+            const binding = document.getElementById('cover_binding_type')?.checked ? (total * 5) : 0;
+            document.getElementById('coverTotalQtyDisplay').innerText = total + ' Pcs';
+            document.getElementById('coverTotalCostDisplay').innerText = 'Tk ' + (total * 5 + binding).toFixed(2);
+            updateCoverBindingToggle('cover_binding_type','coverBindingToggle');
+        }
+
+        function validateCoverOrderForm(event) {
+            if (hasBlankCoverSubject('coverSubjectRows')) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        function openCoverEditModal(order) {
+            document.getElementById('cover_edit_order_id').value = order.id;
+            const rows = document.getElementById('editCoverSubjectRows');
+            rows.innerHTML = '';
+            const fileName = order.file_name || '';
+            const parts = fileName.split(' || ');
+            let items = [];
+            if (parts.length > 1) {
+                items = parts.slice(1).map(part => {
+                    const m = part.match(/^(.*?)\s*-\s*(\d+)\s*Pcs$/i);
+                    return m ? {subject: m[1].trim(), quantity: parseInt(m[2])} : null;
+                }).filter(Boolean);
+            }
+            if (!items.length) items = [{subject: '', quantity: parseInt(order.total_pages) || 1}];
+            items.forEach(item => addEditCoverSubjectRow(item.subject, item.quantity));
+            document.getElementById('edit_cover_binding_type').checked = (order.binding_type === 'Tape');
+            document.getElementById('coverEditModal').classList.remove('hidden');
+            calculateEditCoverCost();
+        }
+        function closeCoverEditModal() { document.getElementById('coverEditModal').classList.add('hidden'); }
+        function addEditCoverSubjectRow(subject = '', quantity = 1) {
+            const rows = document.getElementById('editCoverSubjectRows');
+            if (rows.children.length && hasBlankCoverSubject('editCoverSubjectRows')) return;
+            const row = document.createElement('div');
+            row.className = 'cover-subject-row bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5 shadow-sm';
+            row.innerHTML = `
+                <div class="flex items-center justify-between mb-2.5">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-violet-600 edit-cover-row-title">Subject ${rows.children.length + 1}</span>
+                    <button type="button" onclick="removeEditCoverSubjectRow(this)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-[1fr_120px] gap-2.5 items-stretch">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1.5">Subject Name</label>
+                        <input type="text" name="edit_cover_subject_name[]" value="${escapeHtmlAttr(subject)}" placeholder="Enter subject name" required oninput="this.classList.remove('border-rose-400')" class="cover-subject-name w-full p-3.5 border border-slate-200 rounded-xl focus:outline-none focus:border-violet-500 font-semibold text-sm text-slate-800 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1.5 text-center">Quantity (Pcs)</label>
+                        <div class="flex items-center h-[50px] border border-slate-200 rounded-xl bg-white overflow-hidden">
+                            <button type="button" onclick="changeEditCoverQuantity(this,-1)" class="w-8 h-full text-lg font-black text-slate-500 hover:bg-violet-50 hover:text-violet-700 transition cursor-pointer">−</button>
+                            <input type="number" name="edit_cover_subject_quantity[]" value="${Math.max(1, parseInt(quantity) || 1)}" min="1" required oninput="calculateEditCoverCost()" class="w-full h-full text-center border-x border-slate-100 outline-none font-black text-sm text-slate-800 bg-white">
+                            <button type="button" onclick="changeEditCoverQuantity(this,1)" class="w-8 h-full text-lg font-black text-slate-500 hover:bg-violet-50 hover:text-violet-700 transition cursor-pointer">+</button>
+                        </div>
+                    </div>
+                </div>`;
+            rows.appendChild(row);
+            refreshEditCoverRowTitles();
+            calculateEditCoverCost();
+        }
+        function changeEditCoverQuantity(button, delta) {
+            const input = button.parentElement.querySelector('input');
+            input.value = Math.max(1, (parseInt(input.value) || 1) + delta);
+            calculateEditCoverCost();
+        }
+        function removeEditCoverSubjectRow(button) {
+            const rows = document.getElementById('editCoverSubjectRows');
+            button.closest('.cover-subject-row').remove();
+            if (!rows.children.length) addEditCoverSubjectRow();
+            refreshEditCoverRowTitles();
+            calculateEditCoverCost();
+        }
+        function refreshEditCoverRowTitles() {
+            Array.from(document.querySelectorAll('#editCoverSubjectRows .edit-cover-row-title')).forEach((el, i) => el.innerText = 'Subject ' + (i + 1));
+        }
+        function calculateEditCoverCost() {
+            let total = 0;
+            document.querySelectorAll('#editCoverSubjectRows input[name="edit_cover_subject_quantity[]"]').forEach(el => total += Math.max(0, parseInt(el.value) || 0));
+            const binding = document.getElementById('edit_cover_binding_type')?.checked ? (total * 5) : 0;
+            document.getElementById('editCoverTotalQtyDisplay').innerText = total + ' Pcs';
+            document.getElementById('editCoverTotalCostDisplay').innerText = 'Tk ' + (total * 5 + binding).toFixed(2);
+            updateCoverBindingToggle('edit_cover_binding_type','editCoverBindingToggle');
+        }
+
+        function validateEditCoverOrderForm(event) {
+            if (hasBlankCoverSubject('editCoverSubjectRows')) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        function openBkashModal() { document.getElementById('bkashModal').classList.remove('hidden'); }
+        function closeBkashModal() { document.getElementById('bkashModal').classList.add('hidden'); }
+        
+        function openDetailsModal(order) {
+            document.getElementById('det_file_name').innerText = order.file_name;
+
+            // Order date
+            let dateText = '-';
+            if (order.order_date) {
+                let d = new Date(String(order.order_date).replace(' ', 'T'));
+                if (!isNaN(d)) {
+                    dateText = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
+                               d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    dateText = order.order_date;
+                }
+            }
+            document.getElementById('det_order_date').innerText = dateText;
+
+            let isCover = (order.print_mode === 'cover');
+            let isA4 = (!isCover && (order.print_mode === 'a4' || order.file_path === 'N/A'));
+            document.getElementById('det_paper_row').style.display = isA4 ? 'flex' : 'none';
+            document.getElementById('det_print_type_row').style.display = 'flex';
+            document.getElementById('det_subjects_row').style.display = isCover ? 'block' : 'none';
+            document.getElementById('det_cover_row').style.display = isCover ? 'none' : (isA4 ? 'none' : 'flex');
+            document.getElementById('det_binding_row').style.display = isA4 ? 'none' : 'flex';
+
+            const subjectBox = document.getElementById('det_subjects');
+            subjectBox.innerHTML = '';
+            if (isCover) {
+                const parts = String(order.file_name || '').split(' || ').slice(1);
+                if (parts.length) {
+                    parts.forEach(function(part) {
+                        const m = part.match(/^(.*?)\s*-\s*(\d+)\s*Pcs$/i);
+                        const div = document.createElement('div');
+                        div.className = 'flex justify-between gap-3 bg-white/80 rounded-lg px-2.5 py-2 text-xs';
+                        if (m) {
+                            div.innerHTML = '<span class=\"font-semibold text-slate-700 truncate\">' + escapeHtml(m[1]) + '</span><span class=\"font-black text-violet-700 whitespace-nowrap\">' + m[2] + ' Pcs</span>';
+                        } else {
+                            div.innerHTML = '<span class=\"font-semibold text-slate-700\">' + escapeHtml(part) + '</span>';
+                        }
+                        subjectBox.appendChild(div);
+                    });
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'text-xs font-semibold text-slate-600';
+                    div.innerText = 'Cover pages: ' + (order.total_pages || 0) + ' Pcs';
+                    subjectBox.appendChild(div);
+                }
+            }
+            if (isA4) {
+                document.getElementById('det_paper_type').innerText = (order.file_name || '').indexOf('Margin') !== -1 ? 'Margin Page' : 'Blank Page';
+            }
+            
+            let printTypeText = "Black & White (B&W)";
+            if (isCover) {
+                printTypeText = "Cover Page Order";
+            } else if (order.print_mode === 'color') {
+                printTypeText = "Color Print";
+            } else if (isA4) {
+                printTypeText = "A4 Page Order";
+            }
+            document.getElementById('det_print_type').innerText = printTypeText;
+
+            document.getElementById('det_total_pages').innerText = order.total_pages + ' Pcs';
+
+            let pagesRow = document.getElementById('det_pages_row');
+            if (order.print_mode === 'color') {
+                pagesRow.style.display = 'flex';
+                document.getElementById('det_pages_label').innerText = "Pages Breakdown:";
+                document.getElementById('det_color_pages').innerText = `${order.color_pages || 0} Color, ${order.bw_pages || (order.total_pages - (order.color_pages || 0))} B&W`;
+            } else {
+                pagesRow.style.display = 'none';
+            }
+
+            document.getElementById('det_cover_page').innerText = order.cover_page;
+            const hasTape = (order.binding_type === 'Tape');
+            const bindEl = document.getElementById('det_binding_type');
+            bindEl.innerText = hasTape ? 'Yes' : (order.binding_type === 'Stapler' ? 'No (Stapler only)' : 'No');
+            bindEl.className = 'font-bold ' + (hasTape ? 'text-sky-700' : 'text-slate-800');
+            document.getElementById('det_total_amount').innerText = 'Tk ' + order.total_amount;
+            document.getElementById('detailsModal').classList.remove('hidden');
+        }
+        function closeDetailsModal() { document.getElementById('detailsModal').classList.add('hidden'); }
+
+        function openEditOrder(order) {
+            if (order.print_mode === 'cover') {
+                openCoverEditModal(order);
+            } else if (order.print_mode === 'a4' || order.file_path === 'N/A') {
+                openA4EditModal(order);
+            } else {
+                openEditModal(order);
+            }
+        }
+
+        function openA4EditModal(order) {
+            document.getElementById('a4_edit_order_id').value = order.id;
+            let isMargin = (order.file_name || '').indexOf('Margin') !== -1;
+            document.getElementById(isMargin ? 'a4_edit_type_margin' : 'a4_edit_type_blank').checked = true;
+            document.getElementById('a4_edit_quantity').value = parseInt(order.total_pages) || 1;
+            calculateA4EditCost();
+            document.getElementById('a4EditModal').classList.remove('hidden');
+        }
+        function closeA4EditModal() { document.getElementById('a4EditModal').classList.add('hidden'); }
+        function calculateA4EditCost() {
+            let qty = parseInt(document.getElementById('a4_edit_quantity').value) || 0;
+            document.getElementById('a4EditTotalCostDisplay').innerText = 'Tk ' + (qty * 1.00).toFixed(2);
+        }
+
+        function openEditModal(order) {
+            document.getElementById('edit_order_id').value = order.id;
+            document.getElementById('edit_file_name').value = order.file_name;
+            document.getElementById('edit_cover_page').checked = (order.cover_page === 'Yes');
+            document.getElementById('edit_binding_type').checked = (order.binding_type === 'Tape');
+            
+            document.getElementById('edit_hidden_total').value = order.total_pages;
+            document.getElementById('edit_hidden_color').value = order.color_pages || 0;
+            document.getElementById('edit_hidden_bw').value = order.bw_pages || order.total_pages;
+
+            // Re-scan the existing file so we know the real Color / B&W page split
+            let openToken = ++editScanToken;
+            setEditScanning(false);
+            editScannedData = null;
+            document.getElementById('editPageCountResult').innerHTML = SPINNER_SVG + '<span>Scanning PDF pages... Please wait.</span>';
+            document.getElementById('editEstimatedCostDisplay').innerText = '...';
+            let exData = new FormData();
+            exData.append('action', 'analyze_existing');
+            exData.append('order_id', order.id);
+            fetch('', { method: 'POST', body: exData })
+            .then(res => res.json())
+            .then(data => {
+                if (openToken !== editScanToken) return;
+                if (data.error) {
+                    data = { total: parseInt(order.total_pages) || 0, color: parseInt(order.color_pages) || 0, bw: parseInt(order.bw_pages) || parseInt(order.total_pages) || 0 };
+                }
+                editScannedData = data;
+                document.getElementById('edit_hidden_total').value = data.total;
+                document.getElementById('edit_hidden_color').value = data.color;
+                document.getElementById('edit_hidden_bw').value = data.bw;
+                updateEditDisplayAndCost();
+            })
+            .catch(() => {
+                document.getElementById('editPageCountResult').innerHTML = '<span class="text-rose-600 font-bold">Failed to scan PDF.</span>';
+            });
+
+            if (order.print_mode === 'color') {
+                document.getElementById('edit_mode_color').checked = true;
+            } else {
+                document.getElementById('edit_mode_bw').checked = true;
+            }
+
+            document.getElementById('edit_pdf_file').value = '';
+            document.getElementById('editFileNameDisplay').innerText = 'Keep current file or select new';
+            document.getElementById('edit_server_file_path').value = '';
+            document.getElementById('edit_original_file_name').value = '';
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+
+        let editScanToken = 0;
+        const SPINNER_SVG = '<svg class="w-4 h-4 animate-spin text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+        function setEditScanning(isScanning, fileName) {
+            let saveBtn = document.getElementById('editSaveBtn');
+            if (isScanning) {
+                // Clear everything that belongs to the previous file
+                editScannedData = null;
+                document.getElementById('edit_server_file_path').value = '';
+                document.getElementById('edit_original_file_name').value = '';
+                document.getElementById('edit_hidden_total').value = '';
+                document.getElementById('edit_hidden_color').value = '';
+                document.getElementById('edit_hidden_bw').value = '';
+                if (fileName) document.getElementById('edit_file_name').value = fileName;
+                document.getElementById('editPageCountResult').innerHTML = SPINNER_SVG + '<span>Scanning PDF pages... Please wait.</span>';
+                document.getElementById('editEstimatedCostDisplay').innerText = '...';
+            }
+            if (saveBtn) {
+                saveBtn.disabled = isScanning;
+                saveBtn.classList.toggle('opacity-50', isScanning);
+                saveBtn.classList.toggle('cursor-not-allowed', isScanning);
+            }
+        }
+
+        function handleEditFileChange(e) {
+            let file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('editFileNameDisplay').innerText = file.name;
+            setEditScanning(true, file.name);
+            let myToken = ++editScanToken;
+
+            let formData = new FormData();
+            formData.append('action', 'analyze_pdf');
+            formData.append('pdf_file', file);
+
+            fetch('', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (myToken !== editScanToken) return; // a newer file was chosen, ignore this result
+                if (data.error) {
+                    document.getElementById('editPageCountResult').innerHTML = '<span class="text-rose-600 font-bold">Error: ' + data.error + '</span>';
+                    return;
+                }
+                document.getElementById('edit_server_file_path').value = data.saved_path;
+                document.getElementById('edit_original_file_name').value = data.original_name;
+                document.getElementById('edit_hidden_total').value = data.total;
+                document.getElementById('edit_hidden_color').value = data.color;
+                document.getElementById('edit_hidden_bw').value = data.bw;
+                document.getElementById('edit_file_name').value = data.original_name;
+                editScannedData = data;
+                setEditScanning(false);
+                updateEditDisplayAndCost();
+            })
+            .catch(err => {
+                if (myToken !== editScanToken) return;
+                document.getElementById('editPageCountResult').innerHTML = '<span class="text-rose-600 font-bold">Failed to scan PDF.</span>';
+            });
+        }
+
+        function calculateA4Cost() {
+            let qty = document.getElementById('a4_quantity').value || 1;
+            let total = qty * 1.00;
+            document.getElementById('a4TotalCostDisplay').innerText = 'Tk ' + total.toFixed(2);
+        }
+
+        function copyBkashNumber() {
+            navigator.clipboard.writeText('01959048904');
+            document.getElementById('copyText').innerText = 'Copied!';
+            setTimeout(() => { document.getElementById('copyText').innerText = 'Copy'; }, 2000);
+        }
+
+        document.getElementById('pdf_file').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileNameDisplay').innerText = file.name;
+            document.getElementById('printModeContainer').classList.remove('hidden');
+            
+            let formData = new FormData();
+            formData.append('action', 'analyze_pdf');
+            formData.append('pdf_file', file);
+            
+            let resultBox = document.getElementById('pageCountResult');
+            resultBox.innerHTML = '<svg class="w-4 h-4 animate-spin text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Scanning PDF pages... Please wait.</span>';
+
+            fetch('', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) {
+                    resultBox.innerHTML = '<span class="text-rose-600 font-bold">Error: ' + data.error + '</span>';
+                    return;
+                }
+                scannedPdfData = data;
+
+                document.getElementById('server_file_path').value = data.saved_path;
+                document.getElementById('original_file_name').value = data.original_name;
+                document.getElementById('hidden_total').value = data.total;
+                document.getElementById('hidden_color').value = data.color;
+                document.getElementById('hidden_bw').value = data.bw;
+                
+                updatePageDisplayAndCost();
+            })
+            .catch(err => {
+                resultBox.innerHTML = '<span class="text-rose-600 font-bold">Failed to scan PDF.</span>';
+            });
+        });
+
+        function updatePageDisplayAndCost() {
+            if (!scannedPdfData) return;
+            
+            let printMode = document.querySelector('input[name="print_mode"]:checked').value;
+            let resultBox = document.getElementById('pageCountResult');
+
+            if (printMode === 'color') {
+                resultBox.innerHTML = '<span>Total Pages: <b>' + scannedPdfData.total + '</b> (B&W: ' + scannedPdfData.bw + ', Color: ' + scannedPdfData.color + ')</span>';
+            } else {
+                resultBox.innerHTML = '<span>Total Pages: <b>' + scannedPdfData.total + '</b></span>';
+            }
+
+            calculateEstimatedCost();
+        }
+
+        function calculateEstimatedCost() {
+            let totalPages = parseInt(document.getElementById('hidden_total').value) || 0;
+            let colorPages = parseInt(document.getElementById('hidden_color').value) || 0;
+            let bwPages = parseInt(document.getElementById('hidden_bw').value) || totalPages;
+            let printMode = document.querySelector('input[name="print_mode"]:checked').value;
+            
+            let activeBwPages = (printMode === 'color') ? bwPages : totalPages;
+            let activeColorPages = (printMode === 'color') ? colorPages : 0;
+            
+            let bwCost = activeBwPages * 2;
+            let colorCost = activeColorPages * 5;
+            let pagesCost = bwCost + colorCost;
+            
+            let coverCost = document.getElementById('cover_page').checked ? 5 : 0;
+            let bindingCost = document.getElementById('binding_type').checked ? 5 : 0;
+            
+            let total = pagesCost + coverCost + bindingCost;
+            document.getElementById('estimatedCostDisplay').innerText = 'Tk ' + total.toFixed(2);
+        }
+
+        function updateEditDisplayAndCost() {
+            if (!editScannedData) return;
+
+            let modeEl = document.querySelector('input[name="edit_print_mode"]:checked');
+            let printMode = modeEl ? modeEl.value : 'bw';
+            let box = document.getElementById('editPageCountResult');
+
+            if (printMode === 'color') {
+                box.innerHTML = '<span>Total Pages: <b>' + editScannedData.total + '</b> (B&W: ' + editScannedData.bw + ', Color: ' + editScannedData.color + ')</span>';
+            } else {
+                box.innerHTML = '<span>Total Pages: <b>' + editScannedData.total + '</b></span>';
+            }
+
+            let activeBw = (printMode === 'color') ? editScannedData.bw : editScannedData.total;
+            let activeColor = (printMode === 'color') ? editScannedData.color : 0;
+            let coverCost = document.getElementById('edit_cover_page').checked ? 5 : 0;
+            let bindingCost = document.getElementById('edit_binding_type').checked ? 5 : 0;
+            let total = (activeBw * 2) + (activeColor * 5) + coverCost + bindingCost;
+            document.getElementById('editEstimatedCostDisplay').innerText = 'Tk ' + total.toFixed(2);
+        }
+
+        ['edit_mode_bw', 'edit_mode_color', 'edit_cover_page', 'edit_binding_type'].forEach(function(id) {
+            document.getElementById(id).addEventListener('change', updateEditDisplayAndCost);
+        });
+
+        function closePopup() {
+            const overlay = document.getElementById('popupOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+
+        // Safely pass PHP status flags to JS using json_encode
+const hasMessage = <%= 'true' if (not empty(success) or not empty(error)) else 'false' =%>;        if (hasMessage) {
+            setTimeout(function() {
+                closePopup();
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 1000);
+        }
+
+        // Mascot eyes follow the mouse
+        (function() {
+            const bear = document.getElementById('heroBear');
+            const p1 = document.getElementById('pupil1'), p2 = document.getElementById('pupil2');
+            if (!bear || !p1 || !p2) return;
+            document.addEventListener('mousemove', function(e) {
+                const r = bear.getBoundingClientRect();
+                const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height * 0.55);
+                const dist = Math.hypot(dx, dy) || 1, k = Math.min(dist / 140, 1);
+                const t = 'translate(' + ((dx / dist) * 9 * k).toFixed(1) + 'px, ' + ((dy / dist) * 8 * k).toFixed(1) + 'px)';
+                p1.style.transform = t; p2.style.transform = t;
+            });
+        })();
+    </script>
+</body>
+</html>

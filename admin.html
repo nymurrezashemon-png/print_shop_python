@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Print Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Top Navbar -->
+    <div class="bg-gray-900 text-white p-4 flex justify-between items-center shadow-md">
+        <h1 class="text-xl font-bold">Admin Management Panel</h1>
+        <a href="add_student.php" class="bg-indigo-600 px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">+ Add New Student</a>
+    </div>
+
+    <div class="container mx-auto p-6">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">All Print Orders & Payment History</h2>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-200 text-gray-700 text-xs uppercase tracking-wider">
+                            <th class="p-3">Student Info</th>
+                            <th class="p-3">File & Options</th>
+                            <th class="p-3">Amount (Total/Paid/Due)</th>
+                            <th class="p-3">Payment Method</th>
+                            <th class="p-3">Update Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-200">
+                        <%PY for row in orders PY%>                        <tr>
+                            <td class="p-3">
+                                <p class="font-bold text-indigo-600"><%= h(row['name']) =%></p>
+                                <p class="text-xs text-gray-500">ID: <%= h(row['std_unique_id']) =%></p>
+                                <p class="text-xs text-gray-500">Dept: <%= h(row['department']) =%> | Ph: <%= h(row['phone']) =%></p>
+                            </td>
+                            <td class="p-3">
+                                <a href="<%= e(row['file_path']) =%>" target="_blank" class="text-blue-600 underline font-semibold"><%= h(row['file_name']) =%></a>
+                                <p class="text-xs text-gray-600 mt-1">Cover Page: <b><%= e(row['cover_page']) =%></b> | Binding: <b><%= e(row['binding_type']) =%></b></p>
+                                <p class="text-xs text-gray-500">Pages: <%= e(row['total_pages']) =%> (Color: <%= e(row['color_pages']) =%>, B&W: <%= e(row['bw_pages']) =%>)</p>
+                            </td>
+                            <td class="p-3">
+                                <p class="text-gray-800">Total: ৳<%= e(row['total_amount']) =%></p>
+                                <p class="text-green-600 text-xs">Paid: ৳<%= e(row['paid_amount']) =%></p>
+                                <p class="text-red-600 font-bold text-xs">Due: ৳<%= e(row['due_amount']) =%></p>
+                            </td>
+                            <td class="p-3">
+                                <span class="bg-pink-100 text-pink-700 px-2 py-1 rounded text-xs font-bold"><%= e(row['payment_method']) =%></span>
+                                <%PY if not empty(row['trx_id']) PY%>                                    <p class="text-xs text-gray-500 mt-1">TrxID: <%= e(row['trx_id']) =%></p>
+                                <%PY endif PY%>                            </td>
+                            <td class="p-3">
+                                <form action="" method="POST" class="space-y-2">
+                                    <input type="hidden" name="order_id" value="<%= e(row['id']) =%>">
+                                    
+                                    <select name="order_status" class="border p-1 rounded text-xs w-full">
+                                        <option value="Pending" <%= 'selected' if row['order_status'] == 'Pending' else '' =%>>Pending</option>
+                                        <option value="Printing" <%= 'selected' if row['order_status'] == 'Printing' else '' =%>>Printing</option>
+                                        <option value="Completed" <%= 'selected' if row['order_status'] == 'Completed' else '' =%>>Completed</option>
+                                    </select>
+
+                                    <select name="payment_status" class="border p-1 rounded text-xs w-full">
+                                        <option value="Unpaid" <%= 'selected' if row['payment_status'] == 'Unpaid' else '' =%>>Unpaid</option>
+                                        <option value="Partial" <%= 'selected' if row['payment_status'] == 'Partial' else '' =%>>Partial</option>
+                                        <option value="Paid" <%= 'selected' if row['payment_status'] == 'Paid' else '' =%>>Paid</option>
+                                    </select>
+
+                                    <input type="number" step="0.01" name="paid_amount" value="<%= e(row['paid_amount']) =%>" placeholder="Paid Amount" class="border p-1 rounded text-xs w-full">
+
+                                    <button type="submit" name="update_status" class="w-full bg-green-600 text-white py-1 rounded text-xs hover:bg-green-700">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <%PY endfor PY%>                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
