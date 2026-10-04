@@ -400,8 +400,17 @@
         }
 
         function closePopup() {
-    const overlay = document.getElementById('popupOverlay');
-    if (overlay) {
-        overlay.classList.remove('show');
-    }
-}
+            const overlay = document.getElementById('popupOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        <%PY if redirect PY%>        setTimeout(function() {
+            window.location.href = '<%= e(redirect_url) =%>';
+        }, 1500);
+        <%PY endif PY%>
+        <%PY if not empty(error) PY%>        setTimeout(function() {
+            closePopup();
+        }, 2200);
+        <%PY endif PY%>    </script>
+</body>
+</html>
