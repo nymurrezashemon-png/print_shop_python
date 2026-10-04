@@ -2,10 +2,11 @@
 db.py   (converted from db.php)
 
 <?php
-$host = "localhost";
-$username = "root";
-$password = "";
-$database = "print_shop_db";
+# ---- same credentials as db.php -------------------------------------------
+host = "bdlp5takoc3pgx6r4akc-mysql.services.clever-cloud.com"
+username = "uonrejlx0y5au6yb"
+password = "YOUR_CLEVER_CLOUD_PASSWORD"
+database = "bdlp5takoc3pgx6r4akc"
 $conn = new mysqli($host, $username, $password, $database);
 if ($conn->connect_error) { die("Connection Failed: " . $conn->connect_error); }
 
