@@ -1,14 +1,7 @@
 """
 db.py   (converted from db.php)
 
-<?php
-# ---- same credentials as db.php -------------------------------------------
-host = "bdlp5takoc3pgx6r4akc-mysql.services.clever-cloud.com"
-username = "uonrejlx0y5au6yb"
-password = "YOUR_CLEVER_CLOUD_PASSWORD"
-database = "bdlp5takoc3pgx6r4akc"
-$conn = new mysqli($host, $username, $password, $database);
-if ($conn->connect_error) { die("Connection Failed: " . $conn->connect_error); }
+connect_error) { die("Connection Failed: " . $conn->connect_error); }
 
 The classes below give PyMySQL the same interface the PHP code used from mysqli
 ($conn->query, ->prepare, ->bind_param, ->execute, ->get_result, ->store_result,
@@ -23,10 +16,10 @@ import pymysql
 from php_compat import php_str, intval, floatval
 
 # ---- same credentials as db.php -------------------------------------------
-host = "localhost"
-username = "root"
-password = ""
-database = "print_shop_db"
+host = "bdlp5takoc3pgx6r4akc-mysql.services.clever-cloud.com"
+username = "uonrejlx0y5au6yb"
+password = "3X5PQcE5I3HMoK5GWdNZ"
+database = "bdlp5takoc3pgx6r4akc"
 
 
 class ConnectionFailed(Exception):
