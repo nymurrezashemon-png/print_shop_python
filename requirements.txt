@@ -1,3 +1,4 @@
 Flask>=2.2
 PyMySQL>=1.1
-bcrypt>=4.0      # only used when the admin changes a password that is stored as a PHP password_hash()
+bcrypt>=4.0
+gunicorn
