@@ -1,0 +1,1007 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Print Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Re-map the "indigo" palette to the soft periwinkle-blue of the login theme
+        tailwind.config = { theme: { extend: { colors: { indigo: {
+            50:'#f3f7ff',100:'#e4edff',200:'#cbdafb',300:'#a8c0f3',400:'#7f9fe0',500:'#6a8ed3',
+            600:'#5b7fc7',700:'#4767ab',800:'#37508a',900:'#2b3f78',950:'#1c2a55' } } } } };
+    </script>
+    <style>
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-card {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .app-glass {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .select-card {
+            transition: all 0.25s ease;
+        }
+        input[type="radio"]:checked + .select-card,
+        input[type="checkbox"]:checked + .select-card {
+            border-color: #5b7fc7;
+            background-color: #eaf1ff;
+            color: #2c4170;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(91, 127, 199, 0.22);
+        }
+        input[type="radio"]:checked + .select-card .select-indicator,
+        input[type="checkbox"]:checked + .select-card .select-indicator {
+            background-color: #5b7fc7;
+            border-color: #5b7fc7;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .popup-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .popup-box {
+            background: #ffffff;
+            padding: 35px 25px 30px 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 340px;
+            width: 90%;
+            transform: scale(0.7);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .popup-overlay.show .popup-box {
+            transform: scale(1);
+        }
+
+        .wavy-badge {
+            width: 75px;
+            height: 75px;
+            background: #4caf50;
+            border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(76, 175, 80, 0.3);
+            animation: badgeBounceAndRotate 2.5s infinite ease-in-out;
+        }
+        .error-badge {
+            background: #f44336 !important;
+            box-shadow: 0 8px 16px rgba(244, 67, 54, 0.3) !important;
+        }
+
+        @keyframes badgeBounceAndRotate {
+            0% { transform: scale(1) rotate(0deg); border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; }
+            50% { transform: scale(1.08) rotate(10deg); border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%; }
+            100% { transform: scale(1) rotate(0deg); border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; }
+        }
+
+        .badge-inner {
+            width: 52px;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .popup-box h3 {
+            margin-bottom: 6px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+        .popup-box p {
+            font-size: 13.5px;
+            color: #666;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        body { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; }
+        .themed-bg {
+            background:
+                radial-gradient(circle at 12% 18%, rgba(150,180,255,0.45) 0, transparent 38%),
+                radial-gradient(circle at 88% 78%, rgba(120,160,240,0.35) 0, transparent 40%),
+                linear-gradient(135deg, #f3f7ff 0%, #dce8ff 100%);
+            background-attachment: fixed;
+        }
+        .bg-blob { position: fixed; border-radius: 50%; background: rgba(91,127,199,0.10); z-index: 0; pointer-events: none; }
+        .container, nav { position: relative; }
+        .container { z-index: 1; }
+        nav.nav-grad { background: linear-gradient(135deg, #2b3f78 0%, #4767ab 100%); box-shadow: 0 8px 24px rgba(43,63,120,0.28); }
+        .app-glass { border-radius: 26px !important; border: 1px solid rgba(91,127,199,0.16); box-shadow: 0 14px 34px -10px rgba(60,90,160,0.22), 0 4px 10px -4px rgba(60,90,160,0.08); }
+        .app-glass:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -10px rgba(60,90,160,0.28); }
+        .hero-card:hover { transform: none; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-thumb { background: #b7c9ee; border-radius: 8px; }
+
+        /* ---- mascot ---- */
+        .hero-bear { position: absolute; right: 48px; bottom: calc(100% - 26px); width: 230px; height: 170px; z-index: 5; filter: drop-shadow(0 8px 10px rgba(30,50,110,0.22)); }
+        .hero-bear svg { width: 100%; height: 100%; overflow: visible; display: block; transform-origin: 50% 95%; animation: breathe 3.6s ease-in-out infinite; }
+        @keyframes breathe { 0%,100% { transform: scale(1,1); } 50% { transform: scale(1.012,1.022); } }
+        .eye-white { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
+        @keyframes blink { 0%,93%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
+        .pupil { transition: transform 0.12s ease-out; }
+        .eyelid { transform: scaleY(0); } .lid-line { opacity: 0; }
+        .bear-bubble { position: absolute; right: 292px; bottom: calc(100% + 18px); background: #fff; color: #33466b; font-weight: 800; font-size: 13px; padding: 10px 16px; border-radius: 18px 18px 4px 18px; box-shadow: 0 10px 24px rgba(60,90,160,0.2); animation: floaty 3s ease-in-out infinite; }
+        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @media (max-width: 767px) { .hero-bear { right: 50%; transform: translateX(50%); } .bear-bubble { display: none; } }
+
+        .stat-chip { background: linear-gradient(180deg, #f8faff, #eaf1ff); border: 1px solid #dbe5f7; border-radius: 18px; padding: 12px 14px; transition: transform .2s ease, box-shadow .2s ease; }
+        .stat-chip:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(91,127,199,0.2); }
+        .price-card { background: #fff; border: 1px solid #dbe5f7; border-radius: 20px; padding: 16px; text-align: center; transition: transform .2s ease, box-shadow .2s ease; }
+        .price-card:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(91,127,199,0.22); }
+        .step-dot { width: 38px; height: 38px; border-radius: 14px; background: linear-gradient(180deg,#7f9fe0,#5b7fc7); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 14px rgba(91,127,199,0.4); flex-shrink: 0; }
+
+        /* ---- icons, tiles, motion ---- */
+        .ico { width:46px; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;
+               background:linear-gradient(135deg,#7f9fe0,#4767ab); box-shadow:0 8px 16px rgba(71,103,171,.35); animation: icoFloat 3.2s ease-in-out infinite; }
+        .ico.rose { background:linear-gradient(135deg,#fb7185,#e11d48); box-shadow:0 8px 16px rgba(225,29,72,.3); }
+        .ico.green { background:linear-gradient(135deg,#34d399,#059669); box-shadow:0 8px 16px rgba(5,150,105,.3); }
+        .ico.sm { width:38px; height:38px; border-radius:13px; }
+        @keyframes icoFloat { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4px) rotate(-4deg); } }
+        .svc-tile { position:relative; overflow:hidden; display:flex; flex-direction:column; gap:14px; padding:18px; border-radius:22px;
+                    background:linear-gradient(180deg,#fff,#f1f6ff); border:1px solid #dbe5f7; transition: transform .25s ease, box-shadow .25s ease; }
+        .svc-tile::before { content:''; position:absolute; left:0; top:0; height:4px; width:100%; background:linear-gradient(90deg,#7f9fe0,#5b7fc7,#a8c0f3); background-size:200% 100%; animation: barMove 4s linear infinite; }
+        .svc-tile:hover { transform: translateY(-5px); box-shadow:0 18px 32px rgba(71,103,171,.25); }
+        .svc-tile:hover .ico { animation-duration: .8s; }
+        @keyframes barMove { to { background-position: 200% 0; } }
+        .twinkle { display:inline-block; color:#7f9fe0; animation: twinkle 2.2s ease-in-out infinite; vertical-align: middle; }
+        @keyframes twinkle { 0%,100% { transform: scale(1) rotate(0); opacity:1; } 50% { transform: scale(1.3) rotate(25deg); opacity:.7; } }
+        nav.nav-grad { background-size: 200% 200%; animation: navShift 14s ease infinite; }
+        @keyframes navShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .shine { position:relative; overflow:hidden; }
+        .shine::after { content:''; position:absolute; top:0; left:-70%; width:40%; height:100%; background:linear-gradient(120deg,transparent,rgba(255,255,255,.45),transparent); transform:skewX(-20deg); animation: shineMove 3.8s ease-in-out infinite; pointer-events:none; }
+        @keyframes shineMove { 0%,60% { left:-70%; } 100% { left:130%; } }
+        .reveal { opacity:0; transform: translateY(28px); transition: opacity .7s ease, transform .7s cubic-bezier(.16,1,.3,1); }
+        .reveal.in { opacity:1; transform:none; }
+        .price-card .ico { margin:0 auto 8px; }
+        #scrollBar { position:fixed; top:0; left:0; height:4px; width:0; z-index:60; background:linear-gradient(90deg,#7f9fe0,#5b7fc7,#a8c0f3); box-shadow:0 0 10px rgba(91,127,199,.6); border-radius:0 4px 4px 0; }
+        .float-layer { position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
+        .float-layer span { position:absolute; bottom:-80px; color:rgba(91,127,199,.20); animation: drift linear infinite; }
+        @keyframes drift { 0% { transform: translateY(0) rotate(0); opacity:0; } 10% { opacity:1; } 90% { opacity:1; } 100% { transform: translateY(-115vh) rotate(360deg); opacity:0; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } .reveal { opacity:1; transform:none; } }
+
+        nav.nav-grad { position: sticky; top: 0; }
+        .panel { display: none; } .panel.active { display: block; animation: panelIn .45s cubic-bezier(.16,1,.3,1); }
+        @keyframes panelIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+        .panel .app-glass:hover, .hero-card:hover { transform: none; }
+        .tab-btn { display:flex; align-items:center; gap:12px; width:100%; padding:9px 12px; border-radius:18px; font-weight:800; font-size:13px; color:#52658a; border:1px solid transparent; transition:all .2s ease; cursor:pointer; white-space:nowrap; }
+        .tab-btn:hover { background:#eef4ff; transform:translateX(3px); }
+        .tab-btn.active { background:linear-gradient(135deg,#7f9fe0,#4767ab); color:#fff; box-shadow:0 10px 20px rgba(71,103,171,.35); }
+        .tab-btn.active .ico { background:rgba(255,255,255,.22); box-shadow:none; animation:none; }
+        .tab-count { font-size:10px; padding:2px 8px; border-radius:99px; background:#e4edff; color:#3a5489; }
+        .tab-btn.active .tab-count { background:rgba(255,255,255,.25); color:#fff; }
+        @media (max-width:1023px) { .tab-btn { width:auto; } .tab-btn:hover { transform:none; } }
+        .ico.amber { background:linear-gradient(135deg,#fbbf24,#d97706); box-shadow:0 8px 16px rgba(217,119,6,.3); }
+        .ico.sky { background:linear-gradient(135deg,#38bdf8,#0284c7); box-shadow:0 8px 16px rgba(2,132,199,.3); }
+        .stat-card { display:flex; align-items:center; gap:12px; padding:14px; border-radius:20px; background:linear-gradient(180deg,#fff,#f1f6ff); border:1px solid #dbe5f7; transition:transform .2s ease, box-shadow .2s ease; }
+        .stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 24px rgba(91,127,199,.22); }
+        .stat-card .num { font-size:22px; font-weight:900; color:#2c4170; line-height:1.1; }
+        .stat-card .lbl { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#8a9bbb; }
+        .card-head { display:flex; align-items:center; gap:10px; margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid #eef2f9; }
+        .card-head h3 { font-size:16px; font-weight:900; color:#1f2d4d; }
+        .tbl { width:100%; min-width:720px; text-align:left; font-size:12px; border-collapse:collapse; }
+        .tbl th { padding:10px 12px; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#7285a8; background:#f1f6ff; font-weight:800; white-space:nowrap; }
+        .tbl.fit { min-width:0; table-layout:auto; }
+        .tbl.fit th, .tbl.fit td { padding-left:8px; padding-right:8px; }
+        .tbl th:first-child { border-radius:12px 0 0 12px; } .tbl th:last-child { border-radius:0 12px 12px 0; }
+        .tbl td { padding:12px; border-top:1px solid #eef2f9; vertical-align:middle; }
+        .tbl tbody tr { transition:background .15s ease; } .tbl tbody tr:hover { background:#f5f8ff; }
+        .empty { text-align:center; color:#9aa9c4; font-weight:700; padding:28px 12px !important; font-size:13px; }
+        .badge { display:inline-block; padding:3px 10px; border-radius:99px; font-size:10px; font-weight:800; white-space:nowrap; }
+        .status-select { font-size:10px; font-weight:800; padding:4px 8px; border-radius:99px; border:none; outline:none; cursor:pointer; }
+        .pills { display:flex; gap:6px; flex-wrap:wrap; }
+        .pill { font-size:11px; font-weight:800; padding:7px 12px; border-radius:99px; background:#eef4ff; color:#52658a; cursor:pointer; transition:all .2s ease; }
+        .pill b { margin-left:3px; opacity:.7; }
+        .pill:hover { background:#dfe9ff; } .pill.on { background:linear-gradient(135deg,#7f9fe0,#4767ab); color:#fff; box-shadow:0 6px 14px rgba(71,103,171,.35); }
+        .search-box { display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:99px; background:#f8faff; border:2px solid #dbe5f7; color:#7f9fe0; transition:all .2s ease; }
+        .search-box:focus-within { border-color:#5b7fc7; box-shadow:0 0 0 4px rgba(91,127,199,.18); background:#fff; }
+        .search-box input { outline:none; background:transparent; font-size:12px; font-weight:600; color:#1f2d4d; width:190px; }
+        .field { width:100%; padding:12px 14px; border:2px solid #dbe5f7; background:#f8faff; border-radius:14px; font-size:13px; font-weight:600; color:#1f2d4d; outline:none; transition:all .2s ease; }
+        .field:focus { border-color:#5b7fc7; box-shadow:0 0 0 4px rgba(91,127,199,.18); background:#fff; } .field:disabled { opacity:.6; }
+        .lbl-f { display:block; margin-bottom:6px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#52658a; }
+        .icon-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:11px; background:#eef4ff; color:#4767ab; cursor:pointer; transition:all .2s ease; }
+        .icon-btn:hover { background:#5b7fc7; color:#fff; transform:translateY(-2px); } .icon-btn.green { background:#e6f8ef; color:#059669; } .icon-btn.green:hover { background:#10b981; color:#fff; }
+        .mdl { position:fixed; inset:0; background:rgba(15,23,42,.6); backdrop-filter:blur(4px); z-index:70; display:none; align-items:center; justify-content:center; padding:16px; }
+        .mdl.open { display:flex; }
+        .mdl-box { background:#fff; border-radius:26px; max-width:480px; width:100%; max-height:90vh; overflow:auto; padding:26px; box-shadow:0 30px 60px rgba(20,30,70,.35); animation:panelIn .35s ease; }
+        .mdl-box.wide { max-width:860px; }
+        .mdl-head { display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; margin-bottom:18px; border-bottom:1px solid #eef2f9; }
+        .mdl-head h3 { font-size:20px; font-weight:900; color:#1f2d4d; }
+        .mdl-x { width:38px; height:38px; border-radius:50%; background:#eef2f9; color:#52658a; font-size:20px; font-weight:900; cursor:pointer; transition:all .2s ease; }
+        .mdl-x:hover { background:#f43f5e; color:#fff; transform:rotate(90deg); }
+        .kv { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 14px; border-radius:14px; background:#f8faff; border:1px solid #eef2f9; font-size:12px; }
+        .kv span { font-weight:800; color:#7285a8; } .kv b { font-weight:800; color:#1f2d4d; text-align:right; word-break:break-word; }
+        .kv.total { background:#eaf1ff; border-color:#cbdafb; } .kv.total b { color:#2c4170; font-size:15px; }
+        .mini { padding:14px; border-radius:18px; background:#eaf1ff; text-align:center; } .mini p { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#7285a8; } .mini b { font-size:17px; font-weight:900; color:#2c4170; }
+        .mini.rose { background:#fff1f3; } .mini.rose b { color:#e11d48; } .mini.green { background:#e9f9f1; } .mini.green b { color:#059669; }
+        .sec-t { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; color:#4767ab; margin-bottom:8px; }
+        .bar-grow { transform-origin:left; animation:growX 1s cubic-bezier(.16,1,.3,1) both; } @keyframes growX { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+        i.rounded-full { display:inline-block; }
+        .pay-list { max-height:190px; overflow:auto; border:2px solid #dbe5f7; border-radius:14px; background:#f8faff; }
+        .pay-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; cursor:pointer; border-bottom:1px solid #eef2f9; transition:background .15s ease; }
+        .pay-item:last-child { border-bottom:none; } .pay-item:hover { background:#eaf1ff; } .pay-item.sel { background:#d9e6ff; box-shadow:inset 3px 0 0 #5b7fc7; }
+        .tab-btn.cash-btn { background:linear-gradient(135deg,#34d399,#059669); color:#fff; box-shadow:0 10px 20px rgba(5,150,105,.3); margin-top:6px; }
+        .tab-btn.cash-btn .ico { background:rgba(255,255,255,.22); box-shadow:none; animation:none; }
+        .tab-btn.cash-btn:hover { filter:brightness(1.07); }
+        .cash-in { width:120px; padding:8px 10px; border-radius:12px; font-size:12px; }
+        .cash-in:disabled { background:#f1f5f9; }
+        .upd-btn { background:#059669; color:#fff; font-size:11px; font-weight:800; padding:9px 16px; border-radius:12px; cursor:pointer; box-shadow:0 6px 12px rgba(5,150,105,.25); transition:all .2s ease; }
+        .upd-btn:hover:not(:disabled) { background:#047857; transform:translateY(-1px); }
+        .upd-btn:disabled { opacity:.35; cursor:not-allowed; box-shadow:none; }
+
+        /* ===== Unified button theme (one colour family, soft shade differences) ===== */
+        button.bg-indigo-600, a.bg-indigo-600 { background:linear-gradient(135deg,#86a6e6 0%,#5b7fc7 55%,#4a6bb5 100%) !important; color:#fff !important; border:1px solid rgba(255,255,255,.35); box-shadow:0 10px 20px -6px rgba(74,107,181,.55), inset 0 1px 0 rgba(255,255,255,.35) !important; border-radius:16px !important; letter-spacing:.02em; transition:transform .2s ease, box-shadow .2s ease, filter .2s ease !important; }
+        button.bg-indigo-600:hover, a.bg-indigo-600:hover { filter:brightness(1.07); transform:translateY(-2px); box-shadow:0 16px 26px -8px rgba(74,107,181,.65), inset 0 1px 0 rgba(255,255,255,.4) !important; }
+        button.bg-emerald-600, .upd-btn { background:linear-gradient(135deg,#6fd0c0 0%,#38a9a0 55%,#2b8f95 100%) !important; color:#fff !important; border:1px solid rgba(255,255,255,.35); box-shadow:0 10px 20px -6px rgba(43,143,149,.5), inset 0 1px 0 rgba(255,255,255,.35) !important; border-radius:16px !important; letter-spacing:.02em; transition:transform .2s ease, box-shadow .2s ease, filter .2s ease !important; }
+        button.bg-emerald-600:hover, .upd-btn:hover:not(:disabled) { filter:brightness(1.07); transform:translateY(-2px); background:linear-gradient(135deg,#6fd0c0 0%,#38a9a0 55%,#2b8f95 100%) !important; }
+        .upd-btn { padding:9px 18px; border-radius:13px !important; }
+        a.bg-rose-500 { background:linear-gradient(135deg,#ff9bb0 0%,#f2698b 60%,#e04f77 100%) !important; border:1px solid rgba(255,255,255,.4); border-radius:14px !important; box-shadow:0 8px 18px -5px rgba(224,79,119,.5), inset 0 1px 0 rgba(255,255,255,.4) !important; transition:transform .2s ease, filter .2s ease; }
+        a.bg-rose-500:hover { filter:brightness(1.06); transform:translateY(-2px); }
+        button.bg-indigo-50 { background:linear-gradient(135deg,#f3f7ff,#dfe9ff) !important; color:#3d5aa3 !important; border:1px solid #c9d9f7; border-radius:16px !important; box-shadow:0 6px 14px -6px rgba(91,127,199,.4); transition:transform .2s ease, box-shadow .2s ease; }
+        button.bg-indigo-50:hover { transform:translateY(-2px); background:linear-gradient(135deg,#e4edff,#cbdafb) !important; }
+        button:active, a.bg-indigo-600:active, a.bg-rose-500:active { transform:scale(.97) !important; }
+        .pill { background:linear-gradient(180deg,#f6f9ff,#e6eeff); border:1px solid #d3e0f8; color:#4767ab; box-shadow:0 3px 8px -3px rgba(91,127,199,.35); }
+        .pill:hover { background:linear-gradient(180deg,#eaf1ff,#d6e4ff); transform:translateY(-1px); }
+        .pill.on { background:linear-gradient(135deg,#86a6e6,#4a6bb5); color:#fff; border-color:rgba(255,255,255,.4); box-shadow:0 8px 16px -4px rgba(74,107,181,.5); }
+        .icon-btn { width:34px; height:34px; border-radius:12px; background:linear-gradient(180deg,#f6f9ff,#e4edff); border:1px solid #d3e0f8; color:#4767ab; box-shadow:0 4px 10px -4px rgba(91,127,199,.4); }
+        .icon-btn:hover { background:linear-gradient(135deg,#86a6e6,#4a6bb5); color:#fff; border-color:transparent; }
+        .icon-btn.green { background:linear-gradient(180deg,#f0fbf8,#d9f3ee); border-color:#bfe8df; color:#2b8f95; }
+        .icon-btn.green:hover { background:linear-gradient(135deg,#6fd0c0,#2b8f95); color:#fff; }
+        .tab-btn { border-radius:18px; }
+        .tab-btn.active { background:linear-gradient(135deg,#86a6e6 0%,#5b7fc7 55%,#4a6bb5 100%); border:1px solid rgba(255,255,255,.35); box-shadow:0 12px 22px -6px rgba(74,107,181,.55), inset 0 1px 0 rgba(255,255,255,.35); }
+        .mdl-x { background:linear-gradient(180deg,#f6f9ff,#e4edff); border:1px solid #d3e0f8; }
+        .field { border-radius:16px; background:linear-gradient(180deg,#fbfcff,#f3f7ff); }
+        .badge { box-shadow:inset 0 0 0 1px rgba(0,0,0,.04); }
+        .tbl th { background:linear-gradient(180deg,#f6f9ff,#e9f0ff); }
+        .tbl tbody tr:hover { background:linear-gradient(90deg,#f5f8ff,#eef4ff); }
+    </style>
+
+</head>
+<body class="themed-bg font-sans min-h-screen text-slate-800 antialiased pb-12 relative">
+<div id="scrollBar"></div>
+    <div class="float-layer" aria-hidden="true"><span style="left:81%;animation-duration:33s;animation-delay:-33s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span><span style="left:5%;animation-duration:29s;animation-delay:-3s"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></span><span style="left:22%;animation-duration:33s;animation-delay:-30s"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></span><span style="left:33%;animation-duration:39s;animation-delay:-6s"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></span><span style="left:75%;animation-duration:22s;animation-delay:-13s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></span><span style="left:54%;animation-duration:27s;animation-delay:-24s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg></span><span style="left:22%;animation-duration:26s;animation-delay:-28s"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16.5" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/></svg></span><span style="left:18%;animation-duration:22s;animation-delay:0s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span><span style="left:28%;animation-duration:27s;animation-delay:-10s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></span><span style="left:39%;animation-duration:28s;animation-delay:-34s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></span><span style="left:88%;animation-duration:27s;animation-delay:-12s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></span><span style="left:51%;animation-duration:22s;animation-delay:-23s"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg></span><span style="left:55%;animation-duration:26s;animation-delay:-16s"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg></span><span style="left:10%;animation-duration:31s;animation-delay:-38s"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16.5" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/></svg></span></div>
+    <div class="bg-blob" style="width:340px;height:340px;left:-100px;bottom:-100px;"></div>
+    <div class="bg-blob" style="width:260px;height:260px;right:-80px;top:60px;"></div>
+
+    <!-- Top navigation -->
+    <nav class="nav-grad text-white sticky top-0 z-40">
+        <div class="w-full px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/15 p-1.5 rounded-2xl border border-white/20 shadow-inner flex items-center justify-center">
+                    <svg class="w-8 h-8" viewBox="0 0 40 40"><circle cx="9" cy="9" r="5.5" fill="#7a97d2"/><circle cx="31" cy="9" r="5.5" fill="#7a97d2"/><ellipse cx="20" cy="22" rx="16" ry="14" fill="#93afe4"/><circle cx="14" cy="18" r="5" fill="#fff"/><circle cx="26" cy="18" r="5" fill="#fff"/><circle cx="15" cy="19" r="2" fill="#15101c"/><circle cx="27" cy="19" r="2" fill="#15101c"/><ellipse cx="20" cy="24" rx="5" ry="3.4" fill="#b9cdf3"/><ellipse cx="20" cy="22.6" rx="2.2" ry="1.4" fill="#262033"/><path d="M13 27 Q20 36 27 27 Z" fill="#1a1020"/><rect x="18" y="27" width="4" height="3.4" rx="1" fill="#fff"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-black tracking-tight leading-tight">Print Service Admin</h1>
+                    <p class="text-[10px] text-indigo-200 font-bold uppercase tracking-widest">Control Panel</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 bg-white/10 border border-white/15 px-3 py-1.5 rounded-2xl">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs font-bold"><%= h(admin_name) =%></span>
+                    <span class="text-[9px] font-black uppercase bg-white/20 px-2 py-0.5 rounded-lg">Admin</span>
+                </div>
+                <a href="logout.php" class="shine bg-rose-500 hover:bg-rose-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg><span>Logout</span></a>
+            </div>
+        </div>
+    </nav>
+
+    <%PY if not empty(success) or not empty(error) PY%>    <div id="toast" class="fixed top-20 right-4 z-[80] max-w-xs w-[calc(100%-2rem)] rounded-2xl shadow-2xl px-4 py-3 text-sm font-bold flex items-center gap-3 <%= 'bg-rose-50 text-rose-700 border border-rose-200' if not empty(error) else 'bg-emerald-50 text-emerald-700 border border-emerald-200' =%>" style="animation: panelIn .4s ease;">
+        <span class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs <%= 'bg-rose-500' if not empty(error) else 'bg-emerald-500' =%>"><%= '&#10005;' if not empty(error) else '&#10003;' =%></span>
+        <span><%= h(error if not empty(error) else success) =%></span>
+    </div>
+    <%PY endif PY%>
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <div class="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-6">
+
+            <!-- Sidebar buttons -->
+            <aside>
+                <div class="app-glass p-3 lg:sticky lg:top-24">
+                    <p class="hidden lg:block text-[10px] font-extrabold uppercase tracking-widest text-slate-400 px-3 pt-2 pb-3">Navigation</p>
+                    <div class="side flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible">
+                        <button type="button" class="tab-btn" data-tab="overview" onclick="showTab('overview')"><span class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></span><span class="flex-1 text-left">Overview</span></button>
+                        <button type="button" class="tab-btn" data-tab="orders" onclick="showTab('orders')"><span class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span><span class="flex-1 text-left">Orders</span><span class="tab-count"><%= e(stats['orders']) =%></span></button>
+                        <button type="button" class="tab-btn" data-tab="students" onclick="showTab('students')"><span class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></span><span class="flex-1 text-left">Students</span><span class="tab-count"><%= e(stats['students']) =%></span></button>
+                                                <button type="button" class="tab-btn" data-tab="registered" onclick="showTab('registered')"><span class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></span><span class="flex-1 text-left">Registered</span><span class="tab-count"><%= e(reg_count) =%></span></button>
+                        <button type="button" class="tab-btn" data-tab="cash" onclick="showTab('cash')"><span class="ico sm green"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span><span class="flex-1 text-left">Receive Cash</span></button>
+                        <button type="button" class="tab-btn" data-tab="payments" onclick="showTab('payments')"><span class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span><span class="flex-1 text-left">Payments</span><span class="tab-count"><%= e(php_count(payments)) =%></span></button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="min-w-0">
+
+                <!-- ============ OVERVIEW ============ -->
+                <section class="panel" id="panel-overview">
+                    <div class="relative mt-40">
+                        <div class="bear-bubble hidden md:block">Hi Admin! Here is today's summary <svg class="w-4 h-4 inline-block text-indigo-500 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></div>
+                        <div class="hero-bear" id="heroBear"><svg viewBox="0 0 230 170" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="fur" cx="0.38" cy="0.28" r="0.85">
+                        <stop offset="0" stop-color="#bfd2f6"/><stop offset="0.45" stop-color="#93afe4"/>
+                        <stop offset="0.8" stop-color="#6b89ca"/><stop offset="1" stop-color="#4f6aa8"/>
+                    </radialGradient>
+                    <radialGradient id="lightG" cx="0.34" cy="0.2" r="0.6">
+                        <stop offset="0" stop-color="#fff" stop-opacity="0.45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+                    </radialGradient>
+                    <linearGradient id="shadeG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0.55" stop-color="#1f2f6e" stop-opacity="0"/><stop offset="1" stop-color="#1f2f6e" stop-opacity="0.42"/>
+                    </linearGradient>
+                    <radialGradient id="snout" cx="0.45" cy="0.3" r="0.8">
+                        <stop offset="0" stop-color="#cfdcf8"/><stop offset="1" stop-color="#8fabe0"/>
+                    </radialGradient>
+                    <radialGradient id="eyeW" cx="0.45" cy="0.4" r="0.7">
+                        <stop offset="0" stop-color="#fff"/><stop offset="0.7" stop-color="#f4f7ff"/><stop offset="1" stop-color="#c5d0ea"/>
+                    </radialGradient>
+                    <radialGradient id="pupilG" cx="0.4" cy="0.35" r="0.8">
+                        <stop offset="0" stop-color="#3a3350"/><stop offset="1" stop-color="#0d0914"/>
+                    </radialGradient>
+                    <radialGradient id="noseG" cx="0.4" cy="0.3" r="0.8">
+                        <stop offset="0" stop-color="#5a5073"/><stop offset="1" stop-color="#15101f"/>
+                    </radialGradient>
+                    <linearGradient id="mouthG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#150b1b"/><stop offset="1" stop-color="#3d1730"/>
+                    </linearGradient>
+                    <linearGradient id="toothG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9e0f0"/>
+                    </linearGradient>
+                    <linearGradient id="tongueG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#ff9fab"/><stop offset="1" stop-color="#d95a70"/>
+                    </linearGradient>
+                    <radialGradient id="pinkG" cx="0.4" cy="0.3" r="0.8">
+                        <stop offset="0" stop-color="#f7bcb6"/><stop offset="1" stop-color="#d98a88"/>
+                    </radialGradient>
+                    <filter id="fuzzy" x="-12%" y="-12%" width="124%" height="124%">
+                        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" seed="4" result="n"/>
+                        <feDisplacementMap in="SourceGraphic" in2="n" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+                    </filter>
+                    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+                    <filter id="soft2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
+                    <clipPath id="headClip"><ellipse cx="115" cy="100" rx="90" ry="66"/></clipPath>
+                    <clipPath id="eyeClipL"><ellipse cx="80" cy="82" rx="30" ry="33"/></clipPath>
+                    <clipPath id="eyeClipR"><ellipse cx="150" cy="82" rx="30" ry="33"/></clipPath>
+                </defs>
+
+                <!-- contact shadow on the card -->
+                <ellipse cx="115" cy="164" rx="86" ry="9" fill="#2a3f85" opacity="0.28" filter="url(#soft)"/>
+
+                <!-- outer fur tufts -->
+                <path d="M32 119 q-4.3 1.9 -8.7 3.1 M150 158 q0.7 4.7 4.7 10.9 M188 134 q7.6 4.4 11.4 5.0 M66 48 q-3.8 -7.4 -7.8 -11.3 M147 159 q0.4 5.3 1.3 7.9 M29 92 q-5.9 -1.3 -11.4 -0.7 M202 99 q6.9 -0.8 15.3 0.6 M94 161 q1.0 3.0 -0.8 6.9 M199 84 q6.9 -2.4 10.5 -4.5 M201 92 q5.1 -1.3 8.0 -0.7 M189 133 q3.4 1.9 9.8 5.9 M185 137 q3.8 1.3 7.2 3.1 M147 159 q-0.1 5.6 2.9 11.9 M135 161 q1.2 6.5 3.9 9.9 M136 161 q0.3 7.0 3.8 10.0 M135 161 q0.7 2.2 3.1 7.9 M188 134 q3.6 3.0 8.3 6.3 M199 84 q3.9 -2.0 10.3 -1.2 M188 66 q5.8 -2.3 9.7 -8.2 M144 159 q2.7 5.1 6.0 13.3 M199 115 q5.2 3.4 12.3 4.1 M43 64 q-6.1 -3.2 -8.7 -4.3 M34 77 q-4.1 -4.0 -11.6 -5.6 M202 107 q3.0 -0.9 8.6 -0.8 M37 72 q-1.9 -0.3 -7.7 -1.9 M84 41 q-4.6 -4.5 -5.4 -12.2 M89 40 q-3.1 -5.4 -6.1 -12.5 M78 157 q-2.8 8.0 -7.6 12.9 M108 37 q-0.5 -4.4 0.2 -10.2 M186 63 q6.6 -2.9 10.3 -6.5 M53 55 q-4.9 -2.6 -6.5 -6.4 M202 97 q8.0 -0.2 14.1 -1.0 M34 123 q-8.7 3.3 -13.6 5.7 M29 108 q-3.4 2.2 -7.8 1.0 M112 163 q-1.7 2.6 -1.1 7.8 M187 65 q4.0 -1.8 9.4 -4.9 M143 160 q3.7 5.1 4.4 11.2 M40 69 q-3.4 -0.9 -9.4 -4.6 M94 39 q-2.3 -8.2 -4.2 -14.6 M134 161 q0.6 6.2 2.7 9.6 M201 93 q5.7 -3.3 8.4 -3.0 M93 39 q-3.7 -6.2 -3.6 -9.5 M31 118 q-4.2 -1.3 -5.6 1.0 M55 54 q-2.0 -1.5 -6.4 -6.7 M80 42 q-3.7 -4.6 -3.5 -9.0 M96 39 q-0.6 -4.2 -2.8 -8.7 M50 59 q-3.2 -5.1 -9.7 -6.9 M194 74 q5.3 -0.9 9.5 -5.1 M53 144 q-1.4 4.3 -6.3 8.9 M64 49 q-1.4 -1.9 -4.0 -5.6 M135 161 q2.6 8.6 5.0 14.9 M78 157 q-3.8 5.5 -4.3 11.5 M32 80 q-4.7 -4.6 -11.8 -5.7 M142 40 q-0.5 -4.7 1.9 -6.7 M28 93 q-3.5 -0.3 -10.6 -0.5 M198 80 q2.2 -0.2 6.1 -2.3 M59 52 q-3.5 -4.4 -5.5 -7.9 M164 48 q5.0 -4.7 6.3 -9.6 M37 72 q-3.3 -3.7 -7.4 -3.7 M200 88 q5.3 -0.4 10.0 -0.8 M83 41 q0.6 -2.0 -2.5 -7.3 M105 163 q-0.1 6.6 -2.7 10.0 M29 109 q-3.5 -0.6 -10.4 1.8 M131 38 q0.8 -4.8 0.1 -8.1 M62 150 q-5.8 5.0 -8.5 9.9 M115 163 q-0.5 3.7 0.1 8.1 M29 88 q-4.0 -0.4 -9.2 -1.0 M167 49 q5.0 -3.8 8.1 -10.1 M186 64 q2.3 0.2 6.8 -3.6 M181 59 q1.5 -3.7 5.0 -4.2 M158 45 q2.6 -4.3 6.1 -10.2 M201 107 q6.4 -0.2 9.1 2.6 M28 98 q-7.4 -1.6 -12.3 0.3 M183 139 q3.2 0.9 5.9 4.6 M150 158 q4.1 3.2 4.7 9.7 M195 124 q5.6 3.0 12.5 6.2 M28 94 q-4.0 -0.1 -9.6 -2.9 M151 157 q1.4 3.1 5.2 8.9 M28 95 q-1.9 1.8 -5.5 0.6 M55 54 q-1.2 -2.3 -6.4 -7.1 M110 163 q1.4 6.9 0.3 14.5 M184 62 q6.7 -3.8 11.3 -6.9 M100 38 q-2.9 -4.3 -1.9 -7.5 M59 52 q-3.5 -4.1 -8.4 -6.9 M68 47 q-0.9 -4.3 -5.8 -9.7 M89 40 q-0.4 -5.9 -1.8 -13.7 M111 163 q-1.6 2.7 -2.2 8.6 M115 163 q1.9 7.0 0.1 13.4 M202 98 q6.7 0.0 12.7 -2.0 M199 118 q4.5 1.8 11.6 3.7 M48 59 q-1.8 -2.1 -3.9 -5.1 M57 147 q-3.5 4.4 -5.4 7.0 M90 160 q-2.9 3.5 -3.0 5.0 M48 140 q-2.7 5.1 -9.2 6.7 M193 128 q7.7 1.9 11.7 5.9 M29 91 q-4.3 0.2 -12.5 -2.1 M46 62 q-4.0 -4.2 -5.7 -4.9 M29 89 q-4.2 -1.3 -8.0 -0.7 M39 69 q-1.8 -0.6 -7.5 -4.8 M106 37 q-0.1 -3.0 -2.4 -7.1 M60 149 q-2.1 4.1 -4.9 7.1 M117 37 q1.2 -1.7 -0.8 -6.4 M199 115 q3.6 -0.8 6.3 1.5 M31 84 q-4.3 -0.1 -8.9 -1.2 M54 145 q-3.2 4.7 -8.4 6.8 M193 128 q5.2 0.9 8.2 4.0 M38 129 q-2.7 3.7 -6.6 3.5 M75 156 q-2.3 5.1 -4.0 11.3 M186 136 q4.8 2.9 9.1 5.8 M81 42 q-2.4 -4.4 -2.5 -10.0 M191 131 q3.6 1.2 8.9 5.3 M60 149 q-3.2 4.2 -8.1 7.9 M191 69 q8.0 -4.2 13.5 -6.9 M79 157 q-2.2 4.7 -2.3 10.5 M57 147 q-4.6 3.6 -6.8 6.7 M140 40 q1.0 -4.0 4.5 -10.1 M179 57 q2.5 -2.8 4.7 -6.0 M200 87 q6.4 -0.9 12.5 -4.2 M190 132 q2.1 3.2 7.5 5.4 M169 150 q3.0 5.4 8.2 8.6 M29 91 q-4.5 -0.5 -12.7 -2.3 M28 103 q-3.3 0.3 -9.9 1.3 M155 44 q4.7 -3.0 6.8 -9.1 M199 83 q6.8 -1.4 11.2 -2.2 M39 130 q-3.5 1.6 -6.1 5.8 M140 160 q-0.8 5.0 2.0 11.4 M180 142 q3.1 3.0 9.8 6.3 M40 68 q-8.0 -5.3 -13.4 -8.3 M123 163 q-0.5 4.6 1.5 10.9 M156 156 q3.8 5.5 5.0 11.1 M109 163 q0.6 8.1 0.8 12.6 M29 107 q-3.9 0.9 -10.3 2.7 M29 89 q-5.0 -1.0 -11.4 0.1 M202 104 q5.7 1.4 9.8 1.9 M163 153 q3.3 3.0 3.7 5.8 M58 52 q-6.4 -4.1 -10.0 -10.4 M202 101 q5.4 -0.2 14.1 1.4 M97 38 q1.0 -3.5 -1.7 -7.6 M169 51 q5.1 -5.4 6.9 -7.5 M155 44 q0.7 -2.4 4.1 -7.4 M82 158 q-2.7 4.7 -5.1 7.7 M60 149 q-4.7 6.2 -9.1 8.7 M157 45 q2.6 -6.4 3.6 -10.6 M35 75 q-4.5 -2.2 -11.3 -2.0 M50 58 q-4.4 -3.6 -7.2 -5.9 M47 139 q-4.1 2.4 -10.1 6.1 M197 79 q6.9 -3.8 11.2 -4.4 M170 149 q1.5 3.0 5.6 6.8 M160 46 q0.7 -6.8 4.2 -10.6 M42 135 q-2.2 2.5 -4.6 3.9 M124 37 q0.1 -8.6 0.9 -13.4 M44 137 q-3.2 4.5 -7.7 8.1 M201 107 q2.7 0.4 8.6 1.7 M28 96 q-7.0 0.9 -11.2 -0.3 M186 64 q2.7 -2.2 8.3 -6.2 M202 95 q4.5 2.0 11.4 0.5 M54 55 q-3.5 -2.7 -7.5 -7.0 M73 155 q-5.0 7.8 -7.0 11.7 M172 147 q4.7 4.2 8.9 10.3 M188 66 q5.0 -2.3 13.0 -7.1 M94 161 q-0.8 5.3 -4.2 13.2 M32 81 q-2.6 0.0 -9.1 -3.5 M68 47 q-2.6 -3.0 -4.3 -6.7 M144 41 q-0.8 -3.9 1.2 -6.8 M36 73 q-3.4 -2.9 -7.4 -4.4 M60 51 q-0.1 -3.1 -3.9 -7.1 M30 112 q-3.6 2.3 -9.2 2.6 M28 106 q-6.6 1.1 -12.6 2.7 M35 75 q-6.3 -1.0 -12.1 -5.3 M78 157 q-0.2 4.5 -2.3 8.3 M116 37 q-1.3 -5.6 0.5 -10.9 M28 99 q-5.7 -0.7 -11.6 0.6 M85 159 q-0.6 5.6 -4.4 7.4 M71 46 q-4.6 -4.0 -6.9 -10.1 M36 74 q-8.4 -2.0 -13.8 -4.3 M198 81 q2.1 -3.2 5.7 -2.9 M184 61 q5.2 -6.0 9.6 -8.4 M200 112 q7.9 3.2 12.3 2.6 M29 111 q-3.0 0.3 -9.1 3.1 M161 46 q4.0 -2.7 4.9 -9.4 M141 160 q-0.7 4.6 2.2 12.4 M102 38 q1.0 -5.3 0.2 -7.6 M86 41 q-3.5 -8.0 -4.7 -14.5 M94 39 q-1.0 -3.4 -3.3 -9.2 M54 145 q-4.4 3.6 -6.6 8.7 M193 72 q3.1 -0.4 9.6 -4.6 M34 123 q-4.5 0.2 -9.8 2.1 M115 163 q0.2 4.9 -1.7 11.8 M99 162 q0.3 4.3 -3.2 12.2 M31 115 q-6.2 1.0 -12.4 4.6 M33 78 q-4.6 -1.6 -11.4 -3.3 M28 98 q-4.3 -1.5 -12.2 -0.4 M131 38 q0.7 -3.4 1.9 -9.1 M135 39 q-0.2 -5.8 1.8 -12.3 M28 100 q-3.1 1.9 -6.9 0.9 M152 157 q0.5 3.4 1.5 7.3 M108 163 q-1.1 7.3 -2.7 14.2 M137 39 q-1.4 -5.3 0.8 -9.1 M52 57 q-6.0 -2.2 -8.7 -7.0 M156 156 q2.7 5.4 2.8 8.5 M196 124 q6.2 -0.5 8.6 2.6 M28 104 q-5.4 0.7 -10.4 -0.6 M199 115 q4.6 -0.5 10.0 0.7 M38 129 q-3.2 3.7 -8.6 5.4 M126 162 q0.5 5.6 1.3 7.7 M58 148 q-4.0 3.4 -4.2 7.5 M64 49 q-1.0 -2.2 -5.0 -5.2 M181 59 q3.2 -1.5 7.3 -5.3 M134 162 q-1.0 3.5 0.8 9.4 M134 161 q2.7 5.6 1.5 9.8 M63 38 l4.6 -3.6 M45 32 l-1.5 -5.1 M58 33 l3.0 -5.7 M41 34 l-2.7 -4.3 M38 36 l-4.3 -4.2 M45 32 l-2.3 -8.4 M59 33 l3.1 -5.2 M44 32 l-1.9 -5.3 M65 40 l5.7 -2.9 M61 35 l4.9 -6.2 M65 39 l4.3 -2.6 M43 33 l-2.8 -5.9 M35 40 l-7.4 -4.3 M43 33 l-3.4 -7.3 M51 31 l0.3 -5.2 M46 32 l-1.6 -5.7 M34 41 l-5.1 -2.3 M54 31 l1.2 -5.0 M42 33 l-3.0 -6.0 M52 31 l0.6 -5.5 M58 33 l3.0 -5.2 M59 34 l4.1 -6.5 M37 37 l-4.5 -3.7 M41 34 l-4.1 -6.7 M46 31 l-1.5 -6.4 M64 38 l4.7 -3.6 M42 33 l-3.2 -5.5 M39 35 l-3.4 -3.9 M164 42 l-7.0 -2.8 M183 31 l1.4 -8.1 M196 42 l5.8 -2.3 M187 33 l3.6 -7.9 M169 35 l-5.1 -5.9 M187 32 l3.6 -8.1 M194 38 l4.7 -3.6 M186 32 l1.8 -5.1 M177 31 l-1.2 -6.5 M165 40 l-5.8 -2.9 M173 33 l-2.9 -6.3 M171 34 l-3.0 -4.8 M176 32 l-1.7 -6.7 M167 37 l-5.7 -5.1 M170 35 l-3.3 -4.3 M173 32 l-2.6 -6.2 M167 37 l-5.6 -4.7 M188 33 l3.5 -6.3 M188 33 l2.5 -4.5 M175 32 l-1.7 -6.2 M165 40 l-5.9 -3.0 M165 41 l-6.3 -3.0 M184 31 l1.5 -6.7 M173 33 l-2.6 -5.4 M164 42 l-5.9 -2.3 M194 39 l6.1 -4.0 M170 34 l-4.3 -6.3 M168 36 l-4.9 -4.8" fill="none" stroke="#7e9ad4" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+
+                <!-- fuzzy head + ears -->
+                <g filter="url(#fuzzy)">
+                    <circle cx="50" cy="48" r="19" fill="#7a97d2"/>
+                    <circle cx="180" cy="48" r="19" fill="#7a97d2"/>
+                    <circle cx="50" cy="49" r="9.5" fill="#b9a6dc" opacity="0.6"/>
+                    <circle cx="180" cy="49" r="9.5" fill="#b9a6dc" opacity="0.6"/>
+                    <ellipse cx="115" cy="100" rx="90" ry="66" fill="url(#fur)"/>
+                </g>
+
+                <!-- lighting + fur texture -->
+                <g clip-path="url(#headClip)">
+                    <ellipse cx="115" cy="100" rx="90" ry="66" fill="url(#shadeG)"/>
+                    <ellipse cx="115" cy="100" rx="90" ry="66" fill="url(#lightG)"/>
+                    <g fill="none" stroke-linecap="round">
+                        <path d="M60 70 q-2.4 0.9 -5.8 2.3 M57 72 q-3.6 1.8 -6.9 -0.3 M111 63 q-3.2 6.8 -5.5 10.6 M178 147 q3.4 3.7 4.0 6.2 M191 77 q5.5 1.1 7.1 5.6 M167 59 q5.2 -0.0 10.8 -0.4 M141 78 q2.3 3.1 8.0 5.8 M130 55 q6.7 2.1 10.6 2.0 M33 81 q-4.0 -1.3 -6.9 0.6 M167 109 q0.3 3.9 3.6 10.4 M52 139 q-5.5 6.2 -7.6 8.5 M134 150 q-2.2 5.8 -2.0 10.2 M105 103 q0.4 3.1 -0.2 7.9 M55 67 q-2.0 1.8 -5.5 4.0 M136 116 q-1.2 3.6 -1.4 9.6 M190 98 q2.0 2.6 5.5 6.0 M158 142 q2.3 4.6 5.3 9.5 M28 97 q-5.1 3.5 -8.0 6.3 M97 160 q1.0 5.4 0.6 11.1 M166 83 q3.0 1.9 6.4 7.2 M73 117 q-3.6 6.0 -5.5 10.4 M94 71 q-0.5 1.7 -4.1 5.4 M69 118 q-4.0 3.6 -8.7 6.9 M184 137 q3.1 2.8 7.2 3.9 M89 66 q-7.6 1.8 -11.4 2.5 M62 108 q-1.8 3.5 -5.0 6.1 M202 88 q3.8 3.9 5.1 6.7 M88 37 q-4.8 0.9 -8.8 0.5 M133 164 q0.3 3.3 3.5 7.4 M114 81 q1.9 5.7 2.9 9.5 M113 159 q-2.8 5.0 -2.6 10.3 M198 106 q0.9 4.4 5.6 9.9 M51 89 q-3.9 4.4 -6.2 8.8 M163 135 q2.6 1.3 5.0 4.2 M123 68 q0.3 2.6 2.8 5.7 M58 84 q-1.8 -0.7 -6.5 1.4 M179 91 q5.7 4.2 8.5 4.6 M107 104 q2.0 6.2 2.2 10.7 M151 140 q1.7 4.1 5.0 4.4 M63 52 q-5.3 1.2 -7.3 4.4 M181 141 q3.8 4.7 6.3 6.3 M179 84 q4.6 2.0 10.0 5.6 M112 67 q-0.2 3.7 -0.3 8.6 M60 119 q-2.9 5.5 -2.3 10.8 M61 88 q-2.5 1.9 -4.1 5.2 M72 103 q-5.5 2.4 -7.1 5.5 M122 99 q-0.2 6.3 0.6 11.7 M81 127 q-3.1 4.1 -4.7 8.3 M37 94 q-2.8 1.8 -3.6 5.5 M132 59 q1.6 4.1 5.0 6.8 M192 133 q0.8 4.9 3.1 7.3 M132 49 q3.1 -1.6 9.7 -4.2 M33 80 q-1.2 1.7 -6.0 1.4 M109 98 q-0.8 5.9 -3.0 8.0 M136 91 q1.8 3.8 1.5 8.5 M59 114 q-0.3 2.0 -2.5 7.5 M176 140 q0.4 2.7 3.8 8.5 M83 160 q-3.1 5.1 -3.9 10.9 M35 86 q-3.9 2.2 -7.7 8.2 M65 117 q-4.2 4.8 -8.3 8.0 M54 138 q-2.4 5.5 -2.1 10.2 M131 137 q2.3 3.6 4.0 7.1 M63 132 q-2.8 2.5 -6.4 5.1 M166 95 q1.2 3.9 4.3 6.0 M74 85 q-2.6 5.9 -4.3 10.1 M50 121 q-2.5 4.0 -8.3 8.4 M72 103 q-3.4 3.4 -5.3 4.0 M188 112 q2.6 1.9 6.6 6.6 M190 82 q3.6 1.1 4.9 4.4 M136 146 q1.4 3.7 0.7 6.7 M185 63 q5.6 2.4 7.6 3.1 M94 159 q-2.5 1.6 -3.1 6.9 M71 92 q-3.5 3.1 -4.1 6.3 M108 135 q2.1 3.1 1.3 9.0 M168 53 q5.5 1.1 9.1 1.9 M69 47 q-5.4 0.6 -7.2 -2.3 M63 144 q-1.5 5.2 -2.0 8.5 M175 84 q2.3 4.1 6.7 4.6 M182 141 q3.1 1.3 2.9 5.7 M86 91 q-2.0 0.1 -6.9 3.7 M103 85 q2.7 5.4 1.5 9.3 M164 54 q3.3 -0.8 6.4 0.9 M62 93 q-1.9 2.0 -5.4 4.7 M90 102 q-0.0 4.5 -3.9 8.5 M148 127 q4.4 6.2 5.4 8.7 M197 80 q2.4 3.8 8.6 7.8 M52 71 q-3.0 -0.5 -9.4 2.2 M27 92 q-0.5 4.5 -4.0 5.4 M131 102 q-0.1 5.4 -0.4 10.1 M119 41 q1.1 -1.3 -0.1 -6.4 M144 64 q1.9 2.4 7.6 2.6 M110 150 q0.4 3.8 -0.6 8.0 M123 162 q0.3 3.1 2.7 6.4 M126 63 q2.9 3.2 7.8 6.2 M112 162 q0.3 2.9 2.1 7.1 M104 46 q-5.9 -0.9 -8.4 -3.9 M116 131 q0.1 5.4 1.2 11.9 M191 65 q4.5 1.5 6.8 0.7 M73 150 q-0.7 4.7 -2.1 7.4 M35 109 q-2.4 2.3 -3.8 8.2 M144 87 q6.4 5.1 9.1 6.7 M68 153 q1.5 3.9 -0.7 10.3 M164 141 q2.3 5.0 1.0 10.3 M93 116 q-2.2 4.5 -0.9 11.6 M104 112 q-1.5 3.7 0.1 7.1 M49 88 q-2.6 -0.4 -8.8 2.5 M119 118 q3.0 5.1 2.6 10.2 M143 132 q2.1 5.7 1.9 7.5 M47 113 q-5.3 3.6 -8.0 3.6 M129 99 q-1.8 2.9 0.1 8.4 M151 150 q0.7 3.7 3.6 5.0 M42 100 q-4.7 1.4 -5.6 4.3 M159 109 q1.9 4.1 4.0 7.2 M93 136 q-3.1 4.0 -5.6 7.7 M65 109 q-1.6 3.1 -6.6 3.4 M142 82 q2.8 3.4 7.3 9.4 M108 68 q0.4 2.3 -2.9 6.3 M176 131 q3.3 5.0 6.6 6.6 M60 96 q-2.5 4.5 -3.1 8.4 M74 67 q-3.1 3.9 -6.0 6.7 M162 93 q3.7 1.1 4.9 4.3 M153 48 q5.6 -1.7 11.1 -2.7 M33 78 q-5.0 2.9 -8.3 3.1 M62 99 q-0.4 4.4 -3.5 6.4 M200 92 q5.1 4.5 8.5 6.6 M127 74 q-0.6 5.6 0.9 7.8 M179 107 q4.9 4.6 8.9 6.0 M181 78 q3.4 1.9 10.0 -0.1 M150 73 q5.9 3.5 9.7 3.2 M92 84 q-0.8 3.3 -4.5 4.4 M134 40 q6.0 -2.0 11.0 -4.0 M75 126 q1.2 2.4 0.0 7.0 M70 52 q-5.3 -1.4 -9.0 -0.9 M143 149 q-0.2 7.5 1.0 11.6 M156 81 q3.9 5.5 4.1 8.8 M91 130 q-3.2 5.7 -2.7 8.5 M55 90 q-4.7 1.7 -7.0 2.7 M118 138 q0.8 2.9 2.8 5.7 M183 83 q2.8 1.5 7.8 3.2 M145 94 q4.1 4.2 6.1 8.1 M60 50 q-3.4 0.7 -7.0 -2.6 M76 95 q-4.0 2.0 -5.2 3.7 M104 155 q-0.2 4.3 -2.5 7.5 M98 57 q-2.9 3.6 -5.6 3.6 M131 90 q3.5 2.4 5.5 5.3 M156 131 q1.6 5.5 3.9 9.7 M85 53 q-5.7 1.2 -8.4 6.0 M103 101 q0.8 2.5 1.8 8.2 M195 83 q3.7 3.8 8.8 3.7 M151 125 q3.7 3.9 7.4 8.4 M47 137 q-1.3 4.7 -4.3 9.8 M75 133 q-1.0 3.3 -3.0 7.3 M89 155 q0.7 4.2 -1.7 8.7 M54 144 q-5.0 3.4 -9.2 5.4 M112 64 q-1.6 6.1 -4.5 10.8 M48 121 q-2.2 6.7 -4.8 9.5 M74 147 q1.4 3.3 0.7 8.5 M83 80 q-5.0 6.3 -7.6 9.2 M179 118 q1.8 5.4 4.4 10.1 M96 44 q-5.2 -1.3 -8.5 -4.2 M53 82 q-2.3 -0.7 -6.8 0.1 M102 36 q-4.0 -2.3 -8.2 -4.6 M150 145 q-1.1 6.2 -0.4 10.0 M85 112 q-2.1 5.7 -4.5 7.5 M35 73 q-6.5 1.5 -9.5 4.6 M88 49 q-4.9 -1.8 -7.9 -2.4 M101 98 q-2.1 4.2 -1.4 9.8 M176 54 q2.0 -2.2 7.0 -1.0 M136 45 q5.0 -3.4 8.4 -3.1 M150 44 q5.5 -2.6 9.5 -3.9 M145 79 q2.6 4.0 5.7 5.5 M51 78 q-4.8 0.3 -7.3 -0.3 M167 152 q2.2 4.8 5.0 7.0 M179 72 q4.9 -1.0 8.1 0.3 M177 59 q3.0 0.4 8.1 -0.9 M187 116 q5.4 2.1 10.5 3.5 M131 108 q2.7 6.9 4.7 11.0 M142 108 q2.7 2.3 7.9 6.4 M78 52 q-5.1 1.5 -8.4 2.5 M82 131 q-1.5 1.9 -1.0 7.7 M89 147 q1.3 3.2 -0.1 6.7 M65 97 q-4.4 2.6 -9.7 4.0 M92 56 q-3.8 1.7 -7.5 3.6 M50 91 q-6.5 -0.2 -10.8 3.4 M110 111 q-2.6 3.3 -3.6 9.0 M171 56 q5.8 1.4 9.6 3.2 M62 129 q-3.2 4.8 -9.8 6.8 M155 115 q0.4 3.9 0.6 9.2 M157 64 q4.1 0.5 4.3 4.9 M149 133 q1.0 5.0 1.6 6.5 M43 123 q-4.9 3.0 -7.2 6.2 M175 68 q4.5 -0.5 8.7 0.4 M52 75 q-1.7 1.7 -4.6 5.7 M185 125 q4.9 2.0 9.2 7.3 M85 74 q-3.7 0.3 -9.5 4.1 M194 113 q1.5 -0.2 6.8 2.3 M28 111 q-1.3 1.5 -5.2 5.4 M68 61 q-2.8 -1.0 -6.2 -1.0 M135 70 q1.7 5.0 3.5 6.2 M118 135 q-3.6 3.4 -3.8 9.3 M119 135 q0.4 5.6 -3.0 9.7 M76 71 q-6.0 1.3 -8.5 2.7 M66 132 q1.7 2.6 -0.5 6.1 M98 122 q-3.1 5.5 -3.5 10.9 M36 100 q-4.5 2.7 -6.5 3.7 M189 129 q3.2 2.6 6.7 2.5 M58 61 q-7.0 1.1 -10.3 -0.4 M137 121 q3.6 1.8 4.2 4.5 M132 107 q1.3 2.9 -0.7 9.6 M152 123 q1.1 3.0 4.6 4.8 M133 124 q-0.6 4.3 1.6 8.1 M59 98 q-1.8 0.9 -4.5 4.3 M111 105 q-2.6 4.4 -4.3 8.5 M145 91 q2.9 4.6 6.8 7.6 M130 93 q3.0 4.5 4.0 6.6 M88 40 q-2.8 1.1 -8.4 0.1 M183 142 q1.5 5.6 4.2 10.4 M197 84 q7.0 4.0 10.0 5.3 M66 46 q-3.7 -0.1 -8.0 2.7 M119 84 q-0.7 4.3 -0.1 7.7 M137 141 q-1.7 5.4 -1.5 11.8 M101 73 q-2.5 1.7 -5.4 4.8 M118 100 q1.2 5.4 4.2 6.8 M100 87 q-2.1 4.0 -4.1 6.2 M169 50 q3.5 -0.9 7.9 -0.3 M112 55 q-0.8 4.7 -3.9 5.7 M136 150 q1.2 1.4 3.2 5.3 M107 50 q-7.6 -0.9 -11.7 1.3 M174 110 q2.3 6.0 4.3 9.1 M94 116 q-2.4 0.9 -2.6 5.6 M127 114 q0.9 4.6 1.0 6.7 M98 119 q-0.5 5.0 -4.2 9.5 M42 70 q-6.7 1.8 -11.8 1.3 M74 67 q-3.7 3.9 -5.4 7.0 M51 97 q-1.1 3.7 -3.1 6.0 M195 97 q4.1 2.7 8.2 2.9 M47 139 q-2.5 2.8 -4.9 6.8 M134 100 q2.1 1.5 2.9 5.8 M150 135 q1.2 4.3 2.9 10.2 M58 146 q0.8 2.9 -1.5 5.9 M137 118 q-2.2 5.9 -0.8 10.5 M129 143 q1.9 2.5 0.2 6.3 M164 146 q3.0 1.9 4.7 4.1 M180 66 q3.5 -0.2 6.3 -0.2 M88 160 q-1.4 6.6 0.5 9.8 M182 84 q6.5 2.7 9.9 3.1 M177 112 q6.0 3.4 8.4 4.0 M116 149 q1.6 4.5 1.3 6.9 M85 137 q-2.7 3.0 -5.2 9.0 M146 115 q1.0 3.9 0.9 8.9 M89 120 q-5.0 4.1 -7.0 6.6 M57 70 q-3.3 2.3 -9.6 0.9 M55 129 q-2.6 4.3 -4.2 7.4 M83 131 q-2.8 5.5 -7.1 8.2 M61 135 q-2.8 4.9 -2.4 7.5 M159 83 q1.4 2.3 5.7 3.5 M135 88 q2.4 5.5 6.9 8.0 M78 136 q-0.7 3.0 -0.8 7.7 M113 89 q-1.7 4.1 -2.0 10.6 M133 113 q-2.0 4.6 -0.2 9.6 M74 78 q-2.5 5.7 -3.9 7.6 M60 149 q-5.1 4.3 -7.2 6.1 M172 126 q2.4 0.3 5.6 3.4 M183 97 q4.1 5.6 6.1 10.0 M37 110 q-2.9 1.3 -6.1 3.3 M39 95 q-3.2 3.0 -8.8 3.3 M144 114 q4.5 1.5 5.3 4.5 M58 117 q-1.5 2.1 -5.3 5.6 M161 51 q2.6 -0.4 8.4 -3.9 M157 114 q2.1 4.2 2.8 9.1 M75 96 q-1.6 1.4 -4.6 6.0 M141 122 q-0.6 6.5 2.8 9.1 M143 65 q7.3 -0.2 10.7 2.2 M118 40 q1.1 -3.8 5.3 -4.9 M125 162 q-2.9 3.6 -2.8 8.4 M119 153 q-1.2 5.1 -1.9 10.5 M61 108 q-2.4 3.2 -6.4 7.8 M84 90 q-1.3 2.2 -1.6 8.2 M167 121 q-0.9 4.7 1.9 10.9 M81 127 q1.1 4.3 -0.4 9.5 M128 119 q2.2 5.1 6.5 8.3 M122 82 q3.0 4.4 3.8 6.9 M95 142 q0.9 3.5 -0.5 8.8 M147 41 q7.6 -1.9 11.7 -1.3 M155 98 q0.4 2.9 2.4 6.3 M154 54 q7.1 -0.8 11.3 -1.7 M161 111 q4.9 3.2 6.3 5.7 M125 84 q2.0 3.4 5.2 9.0 M134 106 q1.4 4.5 3.6 8.5 M112 108 q-0.9 3.4 -1.8 7.8 M112 115 q-0.9 2.0 1.3 7.7 M103 101 q-2.6 3.4 -4.7 6.7 M143 103 q0.9 4.0 1.8 9.2 M115 53 q0.5 6.3 -2.2 10.8 M87 60 q-4.3 3.0 -8.8 3.5 M128 88 q0.7 6.5 0.6 9.7 M174 114 q3.1 4.1 8.8 7.7 M163 145 q1.6 6.2 4.7 9.3 M158 101 q3.5 4.2 4.8 10.2 M181 127 q3.2 3.0 2.9 5.7 M176 110 q4.2 3.7 5.4 3.9 M158 131 q1.7 3.2 6.5 7.7 M63 124 q-0.7 5.8 -4.9 8.2 M183 67 q3.6 0.6 7.5 -0.0 M73 76 q-5.8 -1.3 -7.8 0.8 M134 155 q-1.6 2.1 -1.0 6.2 M134 39 q4.5 -0.2 5.2 -4.1 M102 56 q-5.0 0.6 -10.2 3.0 M43 92 q-5.1 5.1 -7.4 6.5 M125 130 q-0.2 6.9 -3.9 11.0 M162 51 q4.1 1.8 6.4 0.9 M125 88 q3.2 5.6 6.5 8.1 M175 97 q4.0 3.3 6.5 7.6 M100 87 q-2.4 3.6 -7.2 7.4 M132 143 q-1.6 2.7 -0.0 9.3 M79 120 q-1.0 4.4 -1.4 7.2 M178 72 q6.0 0.3 11.1 -1.3 M75 74 q-1.7 0.4 -4.8 4.3 M79 43 q-3.4 0.4 -9.2 -2.9 M149 39 q3.4 -0.3 5.8 -1.7 M161 61 q4.3 0.9 6.0 0.8 M184 95 q5.0 4.2 6.2 8.7 M160 75 q3.4 2.2 7.9 0.4 M78 121 q-2.8 2.2 -4.0 5.2 M164 136 q2.4 6.4 6.0 9.0 M137 145 q0.7 4.3 2.9 5.4 M99 145 q-0.6 2.0 -1.4 7.5 M87 129 q-2.4 4.6 -6.4 8.5 M167 58 q4.3 0.5 6.6 -1.7 M194 96 q5.1 1.4 9.2 1.9 M174 149 q3.8 2.8 3.8 6.6 M182 123 q2.2 2.5 6.0 4.2 M84 149 q-2.3 6.2 -7.7 9.1 M113 160 q0.1 2.8 3.7 8.8 M145 93 q-0.3 5.4 3.4 8.5 M194 123 q1.9 2.1 4.2 7.9 M109 88 q-0.2 4.2 -1.9 11.4 M101 46 q-5.0 -0.4 -10.6 -0.0 M68 94 q-3.7 5.8 -6.2 9.5 M89 121 q1.9 7.7 1.8 11.6 M96 91 q0.2 3.6 -0.5 6.3 M162 90 q1.9 -0.2 6.6 3.3 M57 102 q-4.5 5.8 -7.5 9.0 M87 96 q1.2 3.0 -0.6 9.6 M102 70 q-2.7 3.1 -7.3 8.2 M164 154 q0.3 4.0 0.2 11.5 M57 146 q-2.2 5.4 -0.8 7.7 M99 115 q-0.6 4.1 -0.6 7.2 M100 83 q-1.6 4.1 -2.7 5.7 M109 160 q2.0 2.1 1.7 8.2 M53 84 q-4.8 0.7 -11.1 3.6 M135 143 q0.3 5.0 3.8 8.5 M98 107 q1.9 7.3 1.1 11.6 M46 142 q0.2 3.8 -3.1 9.9 M147 101 q4.9 3.0 8.9 6.2 M169 135 q3.1 2.6 5.4 4.1 M141 43 q1.9 -2.1 6.7 -4.1 M198 111 q3.6 5.7 7.3 8.0 M157 48 q2.9 -0.7 6.9 2.2 M121 55 q0.5 5.3 1.6 7.6 M192 89 q2.8 4.9 7.4 8.8 M183 121 q-0.1 4.6 2.7 8.6 M171 118 q5.1 2.9 7.6 3.9 M152 64 q4.1 1.4 5.9 2.2 M86 114 q-2.7 1.3 -2.3 5.9 M85 111 q-1.9 3.7 -6.7 7.0 M140 129 q0.4 5.3 -0.3 9.5 M153 109 q5.0 4.8 6.5 8.9 M114 114 q1.4 3.0 -0.6 8.4 M118 108 q4.2 3.3 5.4 9.4 M183 105 q6.0 3.1 8.8 4.1 M102 150 q-0.5 6.7 0.9 10.5 M78 44 q-5.5 -0.7 -11.7 0.5 M85 71 q-1.2 1.6 -3.2 5.3 M179 134 q3.5 2.3 8.8 5.7 M190 75 q5.0 5.5 9.2 7.5 M66 65 q-3.3 1.0 -7.2 4.0 M62 52 q-5.5 -1.0 -7.3 -1.0 M39 124 q-2.9 3.3 -6.7 6.2 M86 56 q-5.1 0.5 -7.3 1.5" stroke="#3f5a9c" stroke-width="1.2" opacity="0.30"/>
+                        <path d="M181 58 q4.8 -0.5 9.4 -0.5 M150 153 q1.6 1.5 4.9 5.5 M124 117 q0.9 3.9 0.7 7.0 M71 68 q-3.8 1.9 -7.4 2.4 M132 155 q0.9 6.1 0.8 11.8 M121 65 q2.8 4.8 3.7 7.8 M150 159 q1.2 4.9 -1.6 8.8 M95 113 q1.8 5.2 1.8 9.4 M127 57 q3.5 4.0 6.0 7.5 M81 57 q-3.1 2.9 -7.8 6.3 M176 91 q3.8 -0.1 8.7 2.5 M144 82 q1.7 5.1 3.3 6.2 M186 132 q7.1 2.0 11.0 4.4 M75 66 q-3.2 4.3 -5.9 5.6 M165 132 q3.7 4.3 5.0 7.9 M76 158 q-1.4 4.9 -3.3 6.9 M184 115 q1.4 1.6 5.6 5.3 M61 116 q-2.2 2.6 -5.3 5.5 M138 43 q5.5 -3.3 10.6 -5.4 M113 156 q-0.8 6.5 0.4 10.1 M107 161 q0.3 4.3 -0.0 8.4 M51 85 q-6.8 2.3 -10.4 0.8 M136 101 q-1.7 2.5 0.4 7.6 M32 102 q-3.7 1.3 -3.4 6.1 M90 142 q-1.9 4.1 -6.6 7.4 M177 71 q4.0 -1.2 8.2 0.8 M171 79 q5.6 0.0 8.8 1.9 M92 90 q-0.9 4.2 -1.8 6.9 M126 154 q2.1 4.6 0.1 10.5 M176 99 q1.0 2.9 5.4 4.6 M128 107 q1.5 2.8 5.5 7.4 M121 56 q6.3 3.1 8.6 5.3 M53 116 q-3.3 2.2 -8.9 6.5 M120 79 q1.1 4.1 4.7 7.7 M96 163 q1.3 5.2 -1.0 10.8 M122 54 q3.4 3.5 5.6 3.7 M96 66 q-3.5 3.8 -6.1 5.3 M177 102 q3.5 1.3 5.2 4.6 M78 119 q-1.6 3.3 -4.7 7.2 M129 52 q3.5 -1.3 8.9 -1.0 M174 85 q2.9 1.0 4.8 5.0 M121 123 q4.9 4.3 6.0 9.8 M192 104 q3.3 0.5 4.4 4.5 M123 158 q-0.7 4.8 -1.4 7.3 M63 71 q-3.6 2.2 -4.8 4.3 M65 75 q-3.8 1.3 -8.8 3.2 M151 60 q5.9 4.9 9.1 7.6 M90 54 q-2.2 0.6 -5.8 3.2 M64 68 q-5.2 0.4 -8.3 2.3 M87 41 q-4.1 -0.5 -7.9 -0.4 M62 58 q-4.5 1.4 -10.8 -1.0 M58 114 q-1.7 2.2 -6.0 5.1 M54 83 q-3.3 1.8 -4.8 3.7 M147 93 q2.4 4.9 2.5 11.6 M199 107 q5.6 1.4 7.7 1.4 M152 46 q2.6 -2.1 8.4 -3.3 M34 102 q-4.9 2.6 -7.0 7.1 M179 118 q2.8 5.8 6.2 8.2 M103 51 q-4.3 -0.2 -7.0 -0.9 M44 62 q-1.4 -0.1 -6.3 0.1 M137 155 q0.6 4.6 0.8 11.1 M55 108 q-4.2 2.8 -5.6 7.6 M126 107 q0.4 6.8 1.6 10.3 M58 66 q-5.5 4.2 -9.9 5.7 M118 164 q0.4 2.1 -1.1 7.0 M73 127 q-2.6 3.5 -2.6 7.8 M182 133 q3.4 5.4 7.5 7.0 M170 62 q6.5 2.8 9.5 6.4 M95 90 q-0.7 1.8 -2.4 7.6 M116 82 q1.8 5.0 0.9 8.9 M159 143 q2.8 5.5 6.2 7.4 M70 111 q-3.0 4.3 -4.9 10.7 M43 88 q-3.9 1.1 -6.5 0.4 M40 102 q-4.8 0.1 -5.9 2.8 M102 127 q-1.7 3.4 0.3 6.7 M117 74 q0.7 3.2 4.7 9.2 M66 102 q-3.8 1.9 -7.7 4.7 M195 110 q3.1 2.6 9.3 5.7 M81 94 q0.5 7.7 -2.5 11.3 M41 84 q-5.5 2.1 -8.3 3.1 M46 119 q-2.8 4.7 -2.4 7.4 M67 105 q-4.6 2.1 -7.6 5.1 M137 100 q6.0 4.0 9.0 7.6 M177 82 q2.3 2.6 5.1 4.2 M54 129 q-3.5 4.3 -4.7 8.8 M56 121 q0.0 2.3 -1.7 7.3 M26 110 q-3.5 4.4 -9.1 5.0 M72 127 q-2.2 1.3 -4.2 4.5 M43 80 q-3.7 -1.4 -9.0 0.5 M68 46 q-4.4 -1.0 -8.8 -1.3 M132 126 q-2.2 5.0 -0.7 9.1 M150 53 q4.5 -0.9 11.5 -1.9 M80 107 q-2.4 1.6 -2.2 6.8 M70 57 q-5.6 2.4 -10.5 5.1 M180 77 q5.8 1.2 9.7 3.9 M185 124 q0.7 5.2 4.6 8.5 M151 153 q-0.7 4.3 2.1 9.6 M112 78 q2.9 4.5 2.9 8.0 M118 119 q-0.8 4.1 -3.2 10.6 M115 93 q3.1 1.9 2.6 7.5 M156 148 q-1.2 5.2 1.0 7.5 M199 88 q3.8 2.2 5.7 3.2 M153 50 q5.8 0.1 11.8 0.6 M63 56 q-6.7 1.9 -11.6 0.6 M153 73 q5.3 2.4 9.5 1.1 M43 80 q-2.8 0.3 -6.9 1.1 M125 134 q1.5 4.3 2.6 10.1 M190 120 q4.0 2.9 5.8 9.4 M103 144 q-0.7 3.5 0.9 10.9 M96 104 q1.1 4.9 1.4 9.5 M176 121 q1.3 1.7 4.9 6.1 M61 104 q-4.7 3.7 -7.6 6.6 M111 157 q2.2 5.8 2.4 9.2 M31 88 q-5.9 -1.2 -10.7 -0.5 M92 83 q-0.2 2.7 -1.6 6.4 M186 72 q3.1 -0.4 7.5 2.8 M179 140 q4.1 1.6 4.4 4.1 M124 56 q1.1 3.6 2.5 6.0 M200 110 q2.8 0.6 9.0 4.5 M183 130 q1.6 3.9 2.9 11.1 M126 54 q3.8 2.1 7.1 6.8 M131 115 q3.0 1.9 2.3 7.4 M117 77 q1.4 5.6 5.1 10.3 M66 79 q-1.8 1.7 -5.2 4.5 M49 65 q-3.9 4.4 -6.7 5.3 M86 80 q-1.9 0.6 -3.9 4.7 M157 136 q1.8 2.6 2.9 6.7 M109 86 q-3.4 3.0 -4.2 7.6 M96 85 q-3.2 0.6 -5.7 4.6 M30 118 q-1.7 3.5 -3.8 5.9 M141 124 q-1.1 4.4 1.7 7.2 M170 56 q2.4 2.2 6.4 3.5 M62 65 q-4.6 -0.7 -7.2 1.9 M179 118 q7.0 0.8 10.3 4.5 M184 89 q3.6 -0.6 8.3 0.3 M156 113 q3.7 1.1 7.5 4.4 M190 72 q4.6 2.6 10.3 3.2 M124 61 q0.1 3.5 2.9 7.6 M173 137 q4.5 3.4 6.6 6.1 M179 70 q5.3 4.2 9.1 5.1 M54 70 q-2.6 0.6 -8.8 2.7 M138 143 q2.7 2.7 4.3 9.4 M133 150 q1.3 3.3 2.8 9.7 M82 40 q-4.3 1.2 -9.6 1.5 M51 98 q-5.8 2.2 -11.1 2.0 M75 49 q-4.0 -2.6 -5.7 -3.0 M151 42 q5.6 -1.0 8.1 -3.7 M42 68 q-1.4 -1.4 -6.5 -1.0 M56 62 q-1.9 2.9 -7.1 3.4 M142 97 q3.8 5.7 3.9 9.7 M110 121 q1.2 2.9 1.9 7.3 M131 116 q-1.3 5.5 0.5 10.9 M169 95 q2.1 5.2 7.9 7.4 M127 44 q5.7 -3.8 7.9 -4.2 M178 126 q-0.5 3.2 1.5 6.7 M131 52 q1.7 1.6 5.8 2.4 M111 80 q0.7 3.1 2.2 7.6 M127 116 q0.7 7.5 0.3 11.7 M164 137 q3.7 4.9 6.6 8.9 M191 67 q2.6 -0.3 8.6 -1.0 M127 154 q2.3 1.4 1.5 5.8 M107 147 q2.8 3.4 3.8 9.9 M92 84 q-2.8 2.5 -3.8 5.4 M45 85 q-4.6 -0.9 -8.0 0.5 M111 60 q-0.5 4.9 -0.3 7.1 M40 123 q-4.2 3.1 -6.5 6.9 M111 81 q-1.1 3.1 -0.6 7.5 M137 147 q1.4 1.6 4.6 5.8 M153 53 q1.7 0.9 5.9 3.3 M33 97 q-7.4 -0.8 -10.9 2.2 M84 137 q-0.8 5.5 1.3 8.0 M128 136 q0.9 4.7 5.0 9.9 M123 132 q-1.0 4.2 -4.0 9.5 M203 91 q1.3 2.2 6.1 4.1 M32 105 q-6.5 2.5 -10.8 1.1 M102 92 q1.2 6.8 -0.1 11.8 M108 91 q-1.1 3.4 -4.4 6.4 M50 104 q-5.7 3.0 -10.6 3.1 M139 135 q1.0 0.8 2.7 5.7 M195 88 q1.9 2.5 5.7 2.8 M108 120 q-1.6 4.2 -0.3 9.5 M42 80 q-6.2 3.9 -10.4 5.8 M191 130 q3.5 4.2 4.5 5.4 M173 145 q1.5 4.9 0.6 8.1 M64 83 q-2.7 5.7 -7.7 7.7 M177 121 q-0.2 4.8 3.5 6.4 M130 45 q5.3 -3.1 8.1 -3.0 M102 45 q-5.2 0.6 -11.6 -2.0 M135 140 q2.8 6.1 3.7 8.2 M185 67 q4.8 1.9 7.6 7.1 M62 125 q-1.7 4.6 -2.3 11.2 M172 124 q4.8 3.7 8.5 8.0 M126 112 q-0.1 4.9 -0.2 9.7 M42 133 q0.2 2.8 -1.9 7.1 M86 138 q-2.2 5.5 -1.2 10.5 M103 62 q-2.7 0.9 -6.4 5.0 M87 145 q-3.5 4.2 -3.3 8.1 M146 74 q3.4 0.3 8.9 3.9 M179 123 q2.0 6.5 3.3 10.1 M142 72 q6.6 4.0 9.7 6.8 M79 72 q-3.3 3.9 -4.4 6.7 M75 57 q-4.1 -2.2 -5.9 -1.2 M56 146 q-3.9 4.1 -5.3 9.4 M130 66 q2.7 2.4 4.2 8.6 M58 150 q0.6 3.9 -2.9 7.1 M94 57 q-4.9 0.3 -8.0 2.3 M126 154 q1.7 4.9 3.3 5.8 M129 47 q3.6 -1.3 7.1 1.3 M99 99 q-0.4 3.3 0.5 6.7 M120 118 q4.5 6.9 5.1 10.5 M141 122 q-1.5 3.6 -0.2 6.1 M199 86 q3.8 4.5 5.7 5.5 M187 62 q5.6 2.0 9.6 4.7 M37 72 q-3.2 2.2 -6.0 1.4 M99 56 q-6.4 0.9 -10.5 0.2 M120 96 q-0.0 2.1 -2.8 8.1 M94 133 q1.4 5.6 0.4 9.9 M141 88 q4.1 3.9 5.9 6.0 M199 96 q5.7 2.8 8.9 5.5 M79 45 q-5.1 -0.6 -6.3 -2.8 M131 74 q-0.3 3.8 2.1 10.3 M76 56 q-6.0 4.3 -9.7 6.0 M144 92 q3.4 4.1 3.5 8.6 M78 117 q-1.3 0.8 -5.9 5.3 M125 94 q-0.8 6.2 -0.2 11.7 M95 109 q-1.5 1.7 -5.4 7.1 M137 127 q-2.0 2.6 -0.2 6.1 M52 140 q-2.1 1.6 -6.1 4.3 M122 47 q3.3 -2.7 7.3 -5.0 M45 81 q-2.6 3.1 -7.8 4.7 M127 123 q1.7 6.9 4.4 10.9 M188 88 q4.9 3.7 9.8 3.8 M43 100 q-5.7 2.3 -8.9 4.1 M48 124 q-3.6 1.0 -6.1 3.9 M176 89 q6.2 4.5 10.1 6.1 M83 100 q-1.8 2.8 -2.7 5.9 M27 108 q-4.2 2.6 -5.9 3.8 M58 96 q-2.5 3.1 -6.5 5.5 M175 114 q3.8 3.6 7.9 5.2 M191 87 q2.2 3.5 7.5 5.1 M133 138 q1.9 4.0 0.9 7.5 M128 98 q1.4 4.4 2.3 7.6 M42 65 q-2.9 1.4 -7.9 2.4 M105 163 q0.7 4.8 1.2 6.3 M165 53 q3.6 -0.4 8.9 1.9 M38 121 q-3.3 4.0 -9.0 7.7 M66 77 q-6.7 2.3 -10.9 1.4 M91 64 q-3.2 1.5 -8.0 3.0 M56 54 q-4.7 -0.4 -8.5 -2.6 M101 82 q-0.9 2.2 -2.9 7.1 M102 132 q1.7 5.3 0.6 9.4 M67 54 q-3.6 -0.2 -8.3 2.0 M117 37 q3.3 -3.9 3.2 -5.5 M163 138 q2.6 3.0 4.3 5.6 M52 89 q-3.9 3.2 -9.5 4.8 M144 60 q1.2 1.5 5.7 3.4 M97 71 q-3.5 1.5 -7.0 3.3 M150 95 q3.2 2.5 7.6 6.2 M173 147 q1.6 5.7 5.3 7.9 M174 134 q3.3 4.1 7.9 4.7 M39 123 q0.8 3.0 -2.4 7.0 M160 108 q2.7 2.5 6.4 6.5 M54 107 q-1.8 4.3 -4.2 8.1 M111 56 q-2.5 5.0 -2.0 11.5 M65 121 q-2.5 5.5 -3.4 10.6 M90 85 q-1.5 3.9 -3.4 5.9 M168 49 q4.8 -2.1 8.2 -3.1 M174 84 q1.5 3.3 3.9 5.1 M148 60 q3.6 4.3 8.0 6.9 M85 98 q-2.9 2.2 -9.0 6.5 M118 87 q0.3 3.4 0.6 7.8 M59 87 q-5.6 0.5 -9.4 3.3 M119 138 q1.6 6.4 1.1 9.0 M112 136 q0.4 1.2 -0.3 6.0 M58 72 q-6.0 1.0 -10.4 5.8 M150 120 q0.5 6.6 2.2 10.2 M137 127 q2.1 3.7 1.9 9.0 M173 70 q2.9 2.7 8.1 4.9 M125 97 q0.5 4.7 2.9 7.3 M95 81 q-5.6 2.2 -7.7 8.3 M47 63 q-4.8 1.0 -8.9 1.5 M174 73 q5.0 3.7 7.0 5.3 M66 98 q-2.7 3.3 -6.5 9.9 M57 94 q-1.6 2.0 -6.5 4.2 M137 70 q1.9 4.0 3.5 8.6 M178 82 q3.4 1.2 7.0 4.2 M72 112 q-2.6 4.7 -1.4 8.1 M186 135 q3.1 1.6 5.8 4.9 M107 64 q-4.2 3.5 -4.9 3.9 M98 69 q-3.0 1.8 -6.1 5.4 M45 87 q-3.4 0.9 -7.4 1.2 M159 67 q3.7 3.7 8.2 8.1 M182 90 q4.8 3.0 8.9 6.0 M90 72 q-1.0 3.6 -3.9 4.7 M107 35 q-1.7 -1.5 -1.9 -6.4 M181 139 q-0.0 4.2 2.2 6.5 M106 91 q0.6 3.6 -1.7 6.9 M171 103 q7.0 2.5 11.0 3.2 M202 101 q5.8 1.7 9.4 3.0 M148 122 q0.2 5.0 1.3 6.6" stroke="#8eaae0" stroke-width="1.4" opacity="0.55"/>
+                        <path d="M85 114 q-0.7 2.3 -3.6 5.7 M154 47 q3.4 -2.8 7.3 -2.6 M160 80 q3.8 3.7 4.0 3.5 M102 78 q-2.1 2.0 -4.0 6.2 M163 149 q2.4 3.7 2.9 8.2 M68 89 q-1.9 1.1 -6.1 3.8 M96 113 q-1.4 2.7 1.1 6.0 M54 143 q-2.2 6.2 -1.2 9.9 M87 125 q-3.4 1.6 -3.0 6.1 M82 49 q-1.7 -2.0 -5.6 -2.7 M68 97 q-4.0 3.4 -6.0 7.4 M166 76 q2.0 3.7 5.3 5.6 M83 67 q-1.3 1.0 -5.5 0.2 M100 56 q-1.9 2.1 -5.1 1.2 M50 131 q-1.8 2.4 -5.7 4.9 M162 133 q0.6 4.2 1.5 5.6 M198 105 q3.9 1.8 6.1 3.0 M107 125 q1.8 5.6 -0.3 9.4 M90 48 q-4.1 0.2 -5.4 -2.2 M180 106 q4.4 1.7 7.7 5.7 M172 118 q2.5 1.2 4.3 5.9 M63 146 q-2.1 4.6 -1.6 5.7 M154 69 q4.8 2.7 6.5 2.2 M195 82 q4.1 0.2 4.7 3.1 M111 61 q-0.2 5.6 1.5 8.2 M146 149 q0.1 1.7 1.9 4.9 M127 43 q1.8 -0.4 5.8 0.2 M98 127 q-1.0 0.8 -2.3 4.5 M96 133 q0.1 4.5 -1.7 9.5 M160 98 q4.6 2.9 7.1 4.1 M39 98 q-2.6 4.5 -7.2 6.6 M31 84 q-4.6 3.9 -8.8 4.2 M88 143 q0.1 5.1 -2.5 7.3 M146 150 q-0.6 5.0 1.9 6.8 M191 96 q1.5 0.9 4.4 3.2 M162 121 q0.6 1.2 4.6 5.4 M179 85 q3.0 0.9 7.0 1.9 M149 151 q1.4 5.3 -0.9 8.1 M52 89 q-4.9 1.1 -6.3 2.6 M145 51 q2.4 -1.6 8.5 -3.4 M137 132 q2.9 5.0 4.0 7.0 M93 99 q-1.3 1.4 0.3 5.4 M105 125 q-1.7 4.2 -3.1 6.0 M142 142 q4.2 3.0 5.0 5.5 M92 150 q-0.3 4.5 -1.7 7.3 M184 59 q4.4 3.8 7.4 5.2 M129 128 q-2.5 4.5 -1.2 7.1 M146 126 q1.2 2.0 -0.2 5.9 M130 61 q3.9 1.7 6.1 5.8 M98 76 q-2.7 3.9 -2.6 8.5 M167 133 q4.5 2.0 5.2 4.4 M99 100 q0.3 1.4 -0.4 5.5 M130 122 q-1.0 3.4 -0.3 8.3 M104 148 q-1.9 3.3 -1.0 5.6 M101 153 q-1.2 4.1 1.1 5.4 M103 98 q-1.5 5.4 -0.8 8.1 M180 101 q4.1 2.2 4.3 4.1 M168 142 q4.8 2.9 7.0 4.6 M138 102 q-0.6 6.3 0.6 9.2 M126 80 q-0.8 1.4 -0.2 5.1 M131 145 q1.7 4.7 5.7 8.0 M64 151 q-0.8 3.5 -3.7 6.5 M79 108 q-3.2 4.7 -6.0 5.5 M39 113 q-1.2 2.0 -3.4 5.9 M205 98 q2.5 3.7 6.8 5.3 M154 66 q2.6 0.1 7.3 3.9 M142 144 q-0.3 3.3 1.3 9.2 M83 113 q-0.1 2.1 -1.6 7.3 M143 140 q1.4 3.1 1.6 5.7 M201 85 q2.4 0.5 4.7 2.8 M111 118 q-1.9 2.9 -2.1 8.0 M182 98 q3.9 3.2 4.2 4.6 M85 99 q-2.3 3.4 -2.3 4.6 M146 119 q1.3 3.8 5.3 8.3 M96 97 q-1.8 1.7 -2.2 4.9 M175 99 q2.1 0.3 5.8 3.2 M85 150 q-2.3 4.2 -0.9 6.1 M101 133 q-2.2 2.6 -4.8 8.6 M155 51 q4.3 -1.4 5.9 -2.6 M155 159 q2.5 4.3 3.5 4.8 M112 91 q1.8 4.6 2.4 5.6 M170 136 q2.6 1.6 1.9 4.8 M59 142 q-4.0 3.9 -4.5 6.8 M163 148 q1.3 6.0 1.4 8.1 M151 51 q4.5 -1.9 5.1 -0.3 M182 114 q-0.1 1.5 2.2 6.9 M144 134 q3.0 4.8 2.9 5.6 M154 96 q1.2 2.6 2.7 5.1 M83 154 q1.0 5.0 -0.1 9.0 M143 111 q-0.5 5.5 1.1 9.7 M119 39 q-1.6 -2.2 0.3 -6.0 M68 143 q-1.4 3.8 -1.0 8.1 M41 65 q-5.6 1.0 -7.6 4.6 M106 82 q-3.7 4.8 -5.2 7.9 M62 47 q-1.9 -1.0 -6.8 -0.0 M161 79 q5.0 0.9 8.0 4.4 M67 45 q-3.3 1.0 -7.8 0.3 M72 126 q-1.4 5.1 -1.5 8.0 M190 116 q5.6 1.2 8.6 3.6 M149 118 q4.6 1.7 6.7 7.3 M182 103 q4.5 3.7 6.2 4.6 M174 149 q0.6 2.1 4.0 6.2 M134 132 q-0.4 1.5 1.1 6.2 M193 127 q1.2 4.4 5.4 4.8 M194 105 q3.1 0.3 6.4 1.0 M96 52 q-3.5 -0.9 -5.3 0.1 M57 105 q-2.9 0.8 -2.2 5.2 M62 48 q-2.5 -0.3 -6.0 -0.5 M98 158 q-1.5 2.2 0.6 6.5 M170 79 q1.8 1.9 5.5 5.0 M65 98 q-2.3 0.2 -3.7 3.6 M50 106 q-2.9 1.3 -8.9 3.0 M92 158 q-1.2 4.6 1.2 6.8 M112 37 q-1.6 -3.8 -4.7 -7.9 M39 121 q-1.7 2.9 -6.8 6.9 M58 90 q-4.9 0.5 -9.0 2.1 M85 149 q-1.7 4.3 -3.6 7.3 M177 102 q3.9 2.3 5.3 6.8 M194 71 q3.0 0.5 8.4 3.6 M128 147 q0.9 4.6 -1.7 6.5 M130 103 q0.2 5.1 -1.7 7.3 M111 108 q-2.4 5.0 -4.0 8.8 M202 105 q4.6 2.6 7.6 6.3 M143 143 q-0.2 2.7 -0.6 7.6 M141 126 q3.6 2.3 3.7 6.4 M126 156 q-1.8 2.6 -2.1 5.8 M140 107 q0.0 4.1 2.2 5.8 M48 106 q-2.0 4.2 -7.4 4.6 M174 137 q1.5 -0.1 4.9 2.7 M140 126 q-0.0 4.7 -0.0 8.9 M114 49 q-2.0 3.4 -1.7 7.1 M155 96 q3.7 1.8 6.0 5.1 M65 129 q-0.6 1.7 -4.4 2.9 M164 79 q0.8 2.3 3.8 3.4 M84 142 q-2.1 3.0 -5.6 5.4 M114 166 q-0.0 2.2 0.6 5.1 M131 142 q2.8 3.2 5.5 8.0 M49 85 q-3.9 4.3 -7.4 5.3 M123 45 q5.3 -1.4 6.7 -5.3 M161 110 q5.3 2.5 7.6 3.5 M81 58 q-2.7 -1.1 -7.7 0.5 M45 110 q0.1 1.9 -3.2 7.1 M107 44 q-2.7 -3.3 -6.6 -7.3 M56 107 q-1.4 2.3 -5.2 4.2 M56 119 q-2.4 3.7 -7.2 5.7 M115 101 q1.0 0.8 2.0 5.0 M38 110 q-4.0 3.1 -7.0 6.3 M112 124 q-1.7 2.0 -0.7 5.6 M103 35 q-0.8 -1.2 -5.4 -3.1 M141 37 q5.0 0.8 6.0 -1.5 M204 101 q2.3 1.2 4.8 3.9 M124 59 q3.5 0.8 8.4 4.3 M105 77 q-3.0 5.1 -3.1 6.5 M108 85 q-1.0 4.5 -4.6 6.8 M139 132 q4.4 4.0 5.2 7.4 M70 44 q-4.5 1.5 -7.2 -0.8 M143 120 q-1.1 2.7 0.1 5.1 M120 141 q0.4 2.8 4.2 7.2 M175 133 q1.2 2.7 6.1 4.8 M68 153 q1.1 1.5 -0.8 6.4 M52 103 q-1.8 0.5 -3.5 4.7 M163 102 q3.2 1.7 4.7 4.2 M61 68 q-4.5 1.5 -9.6 1.4 M92 94 q-4.6 3.6 -5.5 5.3 M27 99 q-1.4 3.8 -6.0 4.2 M123 56 q4.7 2.8 6.3 6.0 M95 53 q-3.9 -0.4 -6.0 1.1 M129 99 q2.9 3.2 3.2 5.1 M104 120 q-0.8 5.0 -2.7 8.3 M102 93 q-3.8 3.5 -5.0 7.9 M203 93 q1.9 4.8 6.5 6.5 M133 74 q2.5 6.0 1.8 8.9 M146 115 q-0.2 4.1 0.7 5.8 M142 63 q5.8 2.3 7.7 3.5 M90 127 q0.9 2.9 0.0 8.1 M112 49 q-4.1 -1.2 -7.5 1.5 M44 87 q-4.3 -0.8 -9.8 1.2 M152 67 q1.2 2.1 5.7 7.9 M185 117 q2.2 3.2 5.9 5.6 M149 117 q-0.9 3.6 1.4 6.0 M202 93 q0.8 1.9 5.6 6.5 M58 76 q-2.1 -1.4 -5.1 0.6 M116 80 q2.1 5.6 0.4 8.9 M125 65 q1.5 3.9 3.0 7.1 M63 114 q-1.4 4.2 -6.6 4.9 M124 79 q2.2 5.2 2.1 7.2 M118 106 q-2.2 5.1 -3.1 9.4 M73 127 q-0.9 2.9 -4.9 6.9 M55 102 q-2.0 2.8 -7.4 1.8 M193 110 q4.1 -0.6 7.2 2.1 M49 74 q-3.7 0.5 -6.6 3.9 M112 164 q0.6 5.1 -1.2 7.6 M117 58 q-1.2 5.0 1.1 6.5 M163 119 q2.4 1.3 1.6 6.4 M150 136 q2.7 5.6 2.2 8.7 M150 160 q1.9 0.8 5.0 5.3 M141 163 q1.2 4.2 -1.6 6.5 M183 111 q3.8 0.2 5.8 2.8 M111 104 q-1.2 1.6 0.7 6.5 M94 110 q-2.7 0.5 -4.4 4.5 M130 73 q4.4 3.7 5.6 4.0 M48 110 q-0.8 3.4 -3.7 8.8 M134 78 q2.1 1.7 3.6 5.3 M71 91 q0.3 2.4 -1.7 5.3 M42 96 q-2.4 3.2 -4.0 4.4 M108 56 q-0.6 2.6 -4.7 4.1 M133 62 q3.3 3.9 6.3 5.8 M104 158 q-1.1 3.4 0.6 7.6 M127 92 q2.7 4.0 4.2 6.5 M85 48 q-2.7 -1.1 -5.7 -0.5 M179 102 q2.5 3.9 2.8 6.8 M180 111 q0.4 5.6 2.5 7.9 M73 44 q-3.7 -1.6 -7.2 -3.3 M80 155 q-0.4 4.7 0.6 9.9 M76 77 q-0.8 -0.2 -4.6 2.7 M173 56 q2.7 2.1 8.0 3.6 M187 122 q1.2 1.0 2.8 5.4 M78 52 q-1.9 0.8 -6.9 4.2 M154 81 q3.7 -0.6 5.3 1.2 M153 66 q3.8 -1.3 9.1 0.3 M164 101 q3.0 1.0 5.3 5.3 M200 101 q5.4 2.4 7.6 4.0 M113 69 q2.6 5.6 1.3 7.5 M123 152 q0.1 5.2 1.9 6.5 M69 130 q-2.1 5.9 -0.9 9.2 M118 132 q3.4 2.4 3.2 6.0 M77 150 q1.5 5.8 -0.8 8.7 M192 115 q2.7 2.2 4.8 7.6 M85 55 q-5.6 0.5 -8.6 2.1 M57 54 q-5.3 -2.1 -8.7 -3.6 M55 93 q0.1 2.5 -3.3 6.0 M177 57 q6.6 -1.2 9.5 1.5 M41 65 q-4.5 2.9 -6.2 2.8 M51 80 q-4.4 1.9 -8.8 3.4 M66 112 q-3.7 0.1 -7.4 3.6 M103 89 q-1.2 1.8 -1.5 5.9 M125 143 q2.3 1.2 2.9 5.6 M148 65 q3.9 0.3 8.7 1.7 M153 100 q0.5 4.0 1.4 7.3 M145 114 q-0.5 5.5 0.5 8.1 M100 143 q-2.9 6.1 -4.0 8.4 M127 133 q0.6 3.7 0.9 7.8 M123 67 q3.5 2.8 3.8 7.5 M77 136 q1.1 2.7 -1.3 7.4 M156 46 q1.8 -0.0 6.7 -0.5 M146 66 q3.0 1.5 8.8 2.6 M122 53 q2.9 2.4 7.2 3.5 M138 43 q1.9 0.9 5.6 0.4 M59 53 q-4.3 -1.4 -5.2 0.8 M65 91 q-3.6 3.8 -3.7 8.8 M127 46 q4.2 -0.8 8.8 -4.2 M51 125 q-2.1 1.4 -4.8 2.2 M183 90 q2.9 -0.5 5.4 1.7 M63 152 q0.2 3.0 -0.9 6.0 M158 79 q4.2 4.4 4.5 5.5 M134 138 q1.2 4.3 1.7 7.2 M158 143 q-0.6 2.5 0.7 7.0 M91 86 q-0.2 4.1 -1.8 6.2 M82 93 q0.7 2.2 -2.5 4.7 M138 72 q1.9 2.3 4.8 3.1 M67 88 q-0.5 1.5 -3.1 5.6 M197 97 q3.8 -1.3 4.9 1.0 M84 59 q-5.5 2.7 -7.2 3.3 M124 89 q0.8 2.7 3.9 8.3 M145 38 q1.5 -1.4 5.9 1.0 M153 126 q-1.3 4.0 -0.0 8.8 M81 92 q-1.4 1.1 -1.3 5.8 M203 90 q3.5 2.8 6.6 2.9 M42 134 q-2.6 3.1 -5.9 2.5 M85 162 q-2.7 3.6 -2.1 8.1 M92 75 q-2.9 2.5 -6.4 2.8 M86 151 q-2.9 3.2 -4.3 7.8 M63 78 q-2.3 0.6 -6.7 4.1 M123 123 q2.0 1.8 0.5 6.0 M40 119 q-2.6 3.1 -3.0 4.5 M64 152 q-0.4 2.6 -0.7 6.5 M107 120 q-1.0 6.3 -1.0 8.7 M76 72 q-4.1 1.9 -4.9 4.1 M37 87 q0.0 1.4 -3.3 4.0 M102 39 q-1.6 -1.9 -5.5 -2.2" stroke="#eaf1ff" stroke-width="1.2" opacity="0.50"/>
+                    </g>
+                </g>
+                <path d="M52 62 Q70 30 115 30" fill="none" stroke="#fff" stroke-width="4" opacity="0.35" stroke-linecap="round" filter="url(#soft2)"/>
+                <path d="M96 38 Q104 20 110 38 Q116 18 122 38 Q128 22 134 40" fill="none" stroke="#7a97d2" stroke-width="5" stroke-linecap="round" filter="url(#fuzzy)"/>
+
+                <!-- eye sockets -->
+                <ellipse cx="80" cy="84" rx="36" ry="39" fill="#3f5ca3" opacity="0.5" filter="url(#soft2)"/>
+                <ellipse cx="150" cy="84" rx="36" ry="39" fill="#3f5ca3" opacity="0.5" filter="url(#soft2)"/>
+
+                <!-- eyes -->
+                <g class="eye-white">
+                    <ellipse cx="80" cy="82" rx="30" ry="33" fill="url(#eyeW)" stroke="#33497f" stroke-width="2"/>
+                    <ellipse cx="80" cy="66" rx="30" ry="30" fill="rgba(50,70,140,0.10)" clip-path="url(#eyeClipL)"/>
+                    <ellipse cx="80" cy="82" rx="30" ry="33" fill="none" stroke="rgba(30,45,100,0.15)" stroke-width="5" clip-path="url(#eyeClipL)"/>
+                    <g class="pupil" id="pupil1">
+                        <circle cx="80" cy="85" r="9.5" fill="url(#pupilG)"/>
+                        <circle cx="76.5" cy="81" r="3.4" fill="#fff"/>
+                        <circle cx="83.5" cy="89" r="1.6" fill="#fff" opacity="0.7"/>
+                    </g>
+                </g>
+                <g class="eye-white">
+                    <ellipse cx="150" cy="82" rx="30" ry="33" fill="url(#eyeW)" stroke="#33497f" stroke-width="2"/>
+                    <ellipse cx="150" cy="66" rx="30" ry="30" fill="rgba(50,70,140,0.10)" clip-path="url(#eyeClipR)"/>
+                    <ellipse cx="150" cy="82" rx="30" ry="33" fill="none" stroke="rgba(30,45,100,0.15)" stroke-width="5" clip-path="url(#eyeClipR)"/>
+                    <g class="pupil" id="pupil2">
+                        <circle cx="150" cy="85" r="9.5" fill="url(#pupilG)"/>
+                        <circle cx="146.5" cy="81" r="3.4" fill="#fff"/>
+                        <circle cx="153.5" cy="89" r="1.6" fill="#fff" opacity="0.7"/>
+                    </g>
+                </g>
+
+                <!-- eyelids -->
+                <ellipse class="eyelid l" cx="80" cy="82" rx="31.5" ry="34.5" fill="url(#fur)" stroke="#40599a" stroke-width="2"/>
+                <ellipse class="eyelid r" cx="150" cy="82" rx="31.5" ry="34.5" fill="url(#fur)" stroke="#40599a" stroke-width="2"/>
+                <path class="lid-line" d="M56 84 Q80 102 104 84" fill="none" stroke="#2a3f78" stroke-width="3.2" stroke-linecap="round"/>
+                <path class="lid-line" d="M126 84 Q150 102 174 84" fill="none" stroke="#2a3f78" stroke-width="3.2" stroke-linecap="round"/>
+
+                <!-- snout -->
+                <ellipse cx="115" cy="113" rx="36" ry="21" fill="url(#snout)"/>
+                <ellipse cx="115" cy="113" rx="36" ry="21" fill="none" stroke="#7f9cd6" stroke-width="1.2" opacity="0.6"/>
+                <g fill="#4a67ad" opacity="0.45">
+                    <circle cx="98" cy="112" r="1.2"/><circle cx="95" cy="116" r="1.2"/><circle cx="100" cy="117" r="1.2"/>
+                    <circle cx="132" cy="112" r="1.2"/><circle cx="135" cy="116" r="1.2"/><circle cx="130" cy="117" r="1.2"/>
+                </g>
+                <ellipse cx="115" cy="102" rx="11.5" ry="7" fill="url(#noseG)"/>
+                <ellipse cx="111" cy="99.6" rx="4.2" ry="2.1" fill="#fff" opacity="0.55"/>
+                <path d="M115 109 V120" stroke="#3d5596" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+
+                <!-- mouth -->
+                <path d="M66 117 Q115 168 164 117 Q115 129 66 117 Z" fill="url(#mouthG)" stroke="#120a18" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M72 119 Q115 133 158 119" fill="none" stroke="#000" stroke-width="3" opacity="0.35" filter="url(#soft2)"/>
+                <path d="M96 143 Q115 133 134 143 Q115 156 96 143 Z" fill="url(#tongueG)"/>
+                <path d="M115 140 V150" stroke="#b8445b" stroke-width="1.2" opacity="0.7"/>
+                <rect x="103.5" y="122" width="23" height="17" rx="4" fill="url(#toothG)" stroke="#c9d2e8" stroke-width="1"/>
+                <path d="M115 123 V138" stroke="#c3cce2" stroke-width="1.2"/>
+                <ellipse cx="108.5" cy="127" rx="2" ry="3.4" fill="#fff" opacity="0.7"/>
+                <path d="M64 118 Q60 112 66 108 M166 118 Q170 112 164 108" fill="none" stroke="#3d5596" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+
+                <!-- hands holding the card -->
+                <g>
+                    <ellipse cx="46" cy="158" rx="25" ry="15" fill="url(#fur)" filter="url(#fuzzy)"/>
+                    <path d="M30 150 l-3.8 -1.4 M27 153 l-5.6 -0.9 M34 151 l-3.6 -1.8 M36 161 l-5.6 5.3 M56 153 l4.9 -2.6 M54 159 l5.4 3.3 M41 165 l-2.5 8.5 M52 162 l2.8 5.8 M41 153 l-1.7 -1.6 M33 156 l-4.5 0.7 M28 158 l-5.6 2.2 M34 152 l-4.6 -2.6 M58 157 l4.9 1.0 M55 154 l4.6 -2.0 M40 149 l-2.3 -4.5 M50 154 l2.6 -3.2 M30 159 l-5.1 2.3 M42 168 l-1.2 7.5 M47 164 l0.4 7.0 M53 166 l1.9 5.9 M51 159 l4.0 3.7 M44 154 l-1.5 -3.1 M48 150 l0.6 -2.4 M60 150 l2.8 -1.1 M46 167 l-0.2 8.4 M31 164 l-3.7 5.0 M43 151 l-1.1 -2.9 M47 147 l0.4 -4.5 M33 155 l-5.6 -0.5 M32 150 l-4.6 -2.5 M56 163 l4.2 6.3 M47 163 l0.5 6.0 M28 152 l-5.9 -1.5 M58 165 l3.5 5.9 M37 152 l-4.6 -3.0 M51 158 l6.1 1.6 M49 160 l3.6 5.3 M43 146 l-0.5 -2.3 M44 160 l-2.7 6.9 M33 159 l-4.9 2.5 M52 148 l1.5 -2.6 M33 164 l-4.9 6.0 M60 157 l6.0 1.3 M27 155 l-4.3 0.7 M49 162 l3.1 8.1" fill="none" stroke="#dfe9ff" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+                    <ellipse cx="35" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="33.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="46" cy="150" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="44.8" cy="148.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="57" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="55.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/>
+                </g>
+                <g>
+                    <ellipse cx="184" cy="158" rx="25" ry="15" fill="url(#fur)" filter="url(#fuzzy)"/>
+                    <path d="M184 166 l-0.0 6.4 M183 159 l-2.5 7.1 M195 165 l3.0 5.8 M186 166 l0.7 7.0 M184 161 l-0.3 6.2 M194 154 l3.3 -0.6 M190 166 l2.9 8.4 M190 169 l1.6 7.2 M167 164 l-4.5 4.7 M199 161 l5.6 4.1 M176 154 l-4.9 -2.8 M198 149 l3.5 -2.0 M193 149 l2.3 -1.9 M193 159 l4.3 2.7 M196 161 l5.6 4.8 M178 166 l-1.5 5.7 M189 169 l1.0 5.9 M164 156 l-6.3 0.9 M183 150 l-0.6 -4.4 M193 149 l3.3 -4.1 M201 165 l4.2 5.1 M181 152 l-1.9 -4.5 M201 159 l4.6 2.7 M174 163 l-4.6 5.9 M189 151 l2.2 -3.5 M177 163 l-4.1 7.3 M181 161 l-2.2 6.5 M183 152 l-0.3 -4.2 M167 155 l-4.3 0.7 M191 161 l4.0 5.1 M182 158 l-5.0 4.3 M174 162 l-4.6 5.2 M194 156 l6.3 0.0 M176 167 l-1.9 5.9 M198 157 l6.9 1.5 M187 166 l1.2 8.0 M189 164 l2.6 7.4 M196 156 l4.3 0.5 M170 167 l-2.8 5.5 M175 152 l-3.9 -2.4 M188 167 l1.6 8.5 M195 151 l3.4 -2.3 M177 156 l-5.9 -0.7 M179 150 l-2.2 -3.6 M172 162 l-4.1 4.3" fill="none" stroke="#dfe9ff" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+                    <ellipse cx="173" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="171.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="184" cy="150" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="182.8" cy="148.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/><ellipse cx="195" cy="153" rx="4.6" ry="5.2" fill="url(#pinkG)"/><ellipse cx="193.8" cy="151.5" rx="1.4" ry="1.1" fill="#fff" opacity="0.45"/>
+                </g>
+            </svg></div>
+                        <div class="hero-card app-glass p-6 pt-8">
+                            <p class="text-[11px] font-extrabold uppercase tracking-widest text-indigo-500">Admin Panel</p>
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mt-1 md:pr-72">Welcome, <%= h(admin_name) =%>! <span class="twinkle"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg></span></h2>
+                            <p class="text-sm text-slate-500 mt-1 md:pr-72">Manage orders, students and payments from one place.</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                                <div class="svc-tile">
+                                    <div class="flex items-center gap-3"><div class="ico rose"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></div>
+                                        <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Outstanding Due</p>
+                                        <p class="text-2xl font-black text-rose-600 tracking-tight" data-count="<%= number_format(stats['due'], 2, '.', '') =%>" data-dec="2" data-prefix="Tk ">Tk <%= number_format(stats['due'], 2) =%></p>
+                                        <p class="text-[11px] text-slate-400 font-semibold">from <%= e(stats['due_students']) =%> student(s)<%PY if stats['credit'] > 0 PY%> &middot; <span class="text-emerald-600">Tk <%= number_format(stats['credit'], 2) =%> advance held</span><%PY endif PY%></p></div></div>
+                                    <button onclick="openPay()" class="shine w-full justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl text-xs font-bold shadow-md flex items-center gap-2 hover:scale-[1.02] active:scale-95 cursor-pointer"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg><span>Receive Cash</span></button>
+                                </div>
+                                <div class="svc-tile">
+                                    <div class="flex items-center gap-3"><div class="ico green"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+                                        <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Collected</p>
+                                        <p class="text-2xl font-black text-emerald-600 tracking-tight" data-count="<%= number_format(stats['collected'], 2, '.', '') =%>" data-dec="2" data-prefix="Tk ">Tk <%= number_format(stats['collected'], 2) =%></p>
+                                        <p class="text-[11px] text-slate-400 font-semibold"><%= e(php_count(payments)) =%> payment(s) received</p></div></div>
+                                    <button onclick="showTab('payments')" class="shine w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl text-xs font-bold shadow-md flex items-center gap-2 hover:scale-[1.02] active:scale-95 cursor-pointer"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg><span>View Payments</span></button>
+                                </div>
+                                <div class="svc-tile">
+                                    <div class="flex items-center gap-3"><div class="ico"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div>
+                                        <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Order Value</p>
+                                        <p class="text-2xl font-black text-indigo-700 tracking-tight" data-count="<%= number_format(stats['revenue'], 2, '.', '') =%>" data-dec="2" data-prefix="Tk ">Tk <%= number_format(stats['revenue'], 2) =%></p>
+                                        <p class="text-[11px] text-slate-400 font-semibold"><%= e(stats['orders']) =%> order(s) placed</p></div></div>
+                                    <button onclick="showTab('orders')" class="shine w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl text-xs font-bold shadow-md flex items-center gap-2 hover:scale-[1.02] active:scale-95 cursor-pointer"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg><span>View All Orders</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mt-6">
+                        <div class="stat-card"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div><div><p class="num" data-count="<%= e(stats['students']) =%>">0</p><p class="lbl">Students</p></div></div>
+                        <div class="stat-card"><div class="ico sm green"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg></div><div><p class="num" data-count="<%= e(reg_count) =%>">0</p><p class="lbl">Registered</p></div></div>
+                        <div class="stat-card"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><div><p class="num" data-count="<%= e(stats['orders']) =%>">0</p><p class="lbl">Orders</p></div></div>
+                        <div class="stat-card"><div class="ico sm amber"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><p class="num" data-count="<%= e(stats['Pending']) =%>">0</p><p class="lbl">Pending</p></div></div>
+                        <div class="stat-card"><div class="ico sm green"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div><div><p class="num" data-count="<%= e(stats['Completed']) =%>">0</p><p class="lbl">Completed</p></div></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+                        <div class="app-glass p-6">
+                            <div class="card-head"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><h3>Orders Overview</h3></div>
+                            <%PY set ot = php_max(1, stats['orders']) PY%>                            <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">By status</p>
+                            <div class="flex h-4 rounded-full overflow-hidden bg-slate-100">
+                                <div class="bar-grow bg-amber-400" style="width:<%= e(php_round(stats['Pending'] / ot * 100, 1)) =%>%"></div>
+                                <div class="bar-grow bg-emerald-400" style="width:<%= e(php_round(stats['Completed'] / ot * 100, 1)) =%>%"></div>
+                            </div>
+                            <div class="flex flex-wrap gap-4 mt-3 text-[11px] font-bold text-slate-500">
+                                <span class="flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-amber-400"></i>Pending <%= e(stats['Pending']) =%></span>
+                                <span class="flex items-center gap-1.5"><i class="w-2.5 h-2.5 rounded-full bg-emerald-400"></i>Completed <%= e(stats['Completed']) =%></span>
+                            </div>
+                            <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mt-6 mb-3">By type</p>
+                            <%PY for mk, mv in mode_rows PY%>                            <div class="mb-2.5">
+                                <div class="flex justify-between text-[11px] font-bold text-slate-600 mb-1"><span><%= e(mv[0]) =%></span><span><%= e(nc(modes, mk, 0)) =%></span></div>
+                                <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden"><div class="bar-grow h-full rounded-full <%= e(mv[1]) =%>" style="width:<%= e(php_round(nc(modes, mk, 0) / ot * 100, 1)) =%>%"></div></div>
+                            </div>
+                            <%PY endfor PY%>                        </div>
+
+                        <div class="app-glass p-6">
+                            <div class="card-head"><div class="ico sm rose"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></div><h3>Highest Dues</h3></div>
+                            <%PY if empty(top_due) PY%>                                <p class="text-sm text-slate-400 font-semibold py-6 text-center">No pending dues. Everyone is clear! <svg class="w-4 h-4 inline-block text-indigo-300" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="16.5" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.6" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/></svg></p>
+                            <%PY else PY%><%PY for s in top_due PY%>                            <button type="button" onclick="openStudent('<%= h(s['student_id']) =%>')" class="w-full text-left mb-3 p-3 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/40 transition cursor-pointer">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <div><p class="text-sm font-extrabold text-slate-800"><%= h(s['name']) =%></p><p class="text-[10px] font-semibold text-slate-400"><%= h(s['student_id']) =%> &middot; <%= h(s['department']) =%></p></div>
+                                    <p class="text-sm font-black text-rose-600">Tk <%= number_format(s['due_amount'], 2) =%></p>
+                                </div>
+                                <div class="h-2 rounded-full bg-rose-100 overflow-hidden"><div class="bar-grow h-full rounded-full bg-rose-400" style="width:<%= e(php_round(floatval(s['due_amount']) / maxdue * 100)) =%>%"></div></div>
+                            </button>
+                            <%PY endfor PY%><%PY endif PY%>                        </div>
+                    </div>
+
+                    <div class="app-glass p-6 mt-6">
+                        <div class="card-head justify-between"><div class="flex items-center gap-2.5"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><h3>Recent Orders</h3></div>
+                            <button onclick="showTab('orders')" class="text-xs font-extrabold text-indigo-600 hover:underline cursor-pointer">See all</button></div>
+                        <div class="overflow-x-auto"><table class="tbl fit"><thead><tr><th>#</th><th>Student</th><th>Item</th><th>Type</th><th>Pages</th><th>Amount</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody id="recentBody"></tbody></table></div>
+                    </div>
+                </section>
+
+                <!-- ============ ORDERS ============ -->
+                <section class="panel" id="panel-orders">
+                    <div class="app-glass p-6">
+                        <div class="card-head justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-2.5"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><h3>All Orders <span id="ordersCount" class="text-xs font-bold text-slate-400"></span></h3></div>
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <div class="pills" id="orderPills"></div>
+                                <div class="search-box"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="orderSearch" type="text" placeholder="Search student, ID or file..."></div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto"><table class="tbl fit"><thead><tr><th>#</th><th>Student</th><th>Item</th><th>Type</th><th>Pages</th><th>Amount</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+                    </div>
+                </section>
+
+                <!-- ============ STUDENTS ============ -->
+                <section class="panel" id="panel-students">
+                    <div class="app-glass p-6">
+                        <div class="card-head justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-2.5"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div><h3>Students <span id="studentsCount" class="text-xs font-bold text-slate-400"></span></h3></div>
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <div class="search-box"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="studentSearch" type="text" placeholder="Search name, ID or Gmail..."></div>
+                                <button onclick="openModal('m-add')" class="shine bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg><span>Add Student</span></button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Gmail</th><th>Orders</th><th>Due / Advance</th><th>Account</th><th></th></tr></thead><tbody id="studentsBody"></tbody></table></div>
+                    </div>
+                </section>
+
+                <!-- ============ PAYMENTS ============ -->
+                <section class="panel" id="panel-payments">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        <div class="stat-card"><div class="ico sm green"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div><div><p class="num" data-count="<%= number_format(stats['collected'], 2, '.', '') =%>" data-dec="2" data-prefix="Tk ">Tk 0</p><p class="lbl">Total Collected</p></div></div>
+                        <div class="stat-card"><div class="ico sm rose"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></div><div><p class="num" data-count="<%= number_format(stats['due'], 2, '.', '') =%>" data-dec="2" data-prefix="Tk ">Tk 0</p><p class="lbl">Still Due</p></div></div>
+                        <div class="stat-card"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div><div><p class="num" id="cashTotal">Tk 0</p><p class="lbl">Cash</p></div></div>
+                        <div class="stat-card"><div class="ico sm" style="background:linear-gradient(135deg,#f472b6,#E2136E)"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg></div><div><p class="num" id="bkashTotal">Tk 0</p><p class="lbl">bKash</p></div></div>
+                    </div>
+                    <div class="app-glass p-6">
+                        <div class="card-head justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-2.5"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div><h3>Payment History <span id="paymentsCount" class="text-xs font-bold text-slate-400"></span></h3></div>
+                            <div class="search-box"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="paymentSearch" type="text" placeholder="Search student, ID or TrxID..."></div>
+                        </div>
+                        <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>#</th><th>Student</th><th>Amount</th><th>Method</th><th>TrxID</th><th>Status</th><th>Date</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+                    </div>
+                </section>
+
+                <!-- ============ RECEIVE CASH ============ -->
+                <section class="panel" id="panel-cash">
+                    <div class="grid grid-cols-2 gap-3 mb-6 max-w-xl">
+                        <div class="stat-card"><div class="ico sm rose"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div><div><p class="num">Tk <%= number_format(stats['due'], 2) =%></p><p class="lbl">Total Due</p></div></div>
+                        <div class="stat-card"><div class="ico sm amber"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div><div><p class="num"><%= e(stats['due_students']) =%></p><p class="lbl">Students with due</p></div></div>
+                    </div>
+                    <div class="app-glass p-6">
+                        <div class="card-head justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-2.5"><div class="ico sm green"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div><h3>Receive Cash <span id="cashCount" class="text-xs font-bold text-slate-400"></span></h3></div>
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <label class="flex items-center gap-2 text-xs font-bold text-slate-500 cursor-pointer select-none"><input type="checkbox" id="cashDueOnly" class="w-4 h-4 accent-indigo-600"> Only with due</label>
+                                <div class="search-box"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="cashSearch" type="text" placeholder="Search name or ID..."></div>
+                            </div>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-400 mb-3">Type the cash received in the box and press <b class="text-emerald-600">Update</b> on that student's row. Their due is reduced automatically. If they pay more than the due, the extra is saved as an advance (green) and used on their next order.</p>
+                        <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Due / Advance</th><th>Cash received (Tk)</th></tr></thead><tbody id="cashBody"></tbody></table></div>
+                    </div>
+                </section>
+
+                <!-- ============ REGISTERED ============ -->
+                <section class="panel" id="panel-registered">
+                    <div class="app-glass p-6">
+                        <div class="card-head justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-2.5"><div class="ico sm green"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div><h3>Registered Students <span id="regCount" class="text-xs font-bold text-slate-400"></span></h3></div>
+                            <div class="search-box"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input id="regSearch" type="text" placeholder="Search name, ID or Gmail..."></div>
+                        </div>
+                        <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>Student</th><th>Department</th><th>Gmail</th><th>Password</th><th>Account</th><th></th></tr></thead><tbody id="regBody"></tbody></table></div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ============ MODALS ============ -->
+    <div class="mdl" id="m-student"><div class="mdl-box wide">
+        <div class="mdl-head"><div class="flex items-center gap-3"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div><h3>Student Details</h3></div><button class="mdl-x" onclick="closeModal('m-student')">&times;</button></div>
+        <div id="studentModalBody"></div>
+    </div></div>
+
+    <div class="mdl" id="m-order"><div class="mdl-box">
+        <div class="mdl-head"><div class="flex items-center gap-3"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div><h3>Order Details</h3></div><button class="mdl-x" onclick="closeModal('m-order')">&times;</button></div>
+        <div id="orderModalBody"></div>
+    </div></div>
+
+    <div class="mdl" id="m-add"><div class="mdl-box" style="max-width:560px">
+        <div class="mdl-head"><div class="flex items-center gap-3"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg></div><h3>Add New Student</h3></div><button class="mdl-x" onclick="closeModal('m-add')">&times;</button></div>
+        <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" name="csrf" value="<%= e(csrf) =%>">
+            <input type="hidden" name="form_type" value="add_student">
+            <input type="hidden" name="tab" value="students">
+            <div><label class="lbl-f">Full Name</label><input class="field" type="text" name="name" required placeholder="e.g. Nymur Reza Shemon" value="<%= h(nc(old, 'name', '')) =%>"></div>
+            <div><label class="lbl-f">Student ID (4-11 digits)</label><input class="field" type="text" name="student_id" required maxlength="11" placeholder="e.g. 11230321209" value="<%= h(nc(old, 'student_id', '')) =%>"></div>
+            <div><label class="lbl-f">Department</label><input class="field" type="text" name="department" required placeholder="e.g. CSE" value="<%= h(nc(old, 'department', '')) =%>"></div>
+            <div><label class="lbl-f">Section</label><input class="field" type="text" name="section" required placeholder="e.g. A" value="<%= h(nc(old, 'section', '')) =%>"></div>
+            <div class="sm:col-span-2 p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-xs font-semibold text-slate-600">Only the student record is created here. The student will register by themselves with the last 4 digits of the ID, and will set their own password and Gmail.</div>
+            <button type="submit" class="shine sm:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm shadow-md cursor-pointer">Add Student</button>
+        </form>
+    </div></div>
+
+    <div class="mdl" id="m-pw"><div class="mdl-box">
+        <div class="mdl-head"><div class="flex items-center gap-3"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div><h3>Change Password</h3></div><button class="mdl-x" onclick="closeModal('m-pw')">&times;</button></div>
+        <form method="POST" class="space-y-4">
+            <input type="hidden" name="csrf" value="<%= e(csrf) =%>">
+            <input type="hidden" name="form_type" value="change_password">
+            <input type="hidden" name="tab" value="registered">
+            <input type="hidden" name="student_id" id="pw_sid">
+            <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-100"><p id="pw_name" class="text-sm font-extrabold text-slate-800"></p><p id="pw_sid_txt" class="text-[10px] font-semibold text-slate-400"></p></div>
+            <div><label class="lbl-f">New Password</label><input class="field" type="text" name="new_password" id="pw_new" required minlength="4" autocomplete="off" placeholder="At least 4 characters"></div>
+            <button type="submit" class="shine w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm shadow-md cursor-pointer">Update Password</button>
+        </form>
+    </div></div>
+
+    <div class="mdl" id="m-edit"><div class="mdl-box">
+        <div class="mdl-head"><div class="flex items-center gap-3"><div class="ico sm"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></div><h3>Edit Student</h3></div><button class="mdl-x" onclick="closeModal('m-edit')">&times;</button></div>
+        <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" name="csrf" value="<%= e(csrf) =%>">
+            <input type="hidden" name="form_type" value="edit_student">
+            <input type="hidden" name="tab" value="students">
+            <input type="hidden" name="student_id" id="ed_sid">
+            <div class="sm:col-span-2"><label class="lbl-f">Student ID</label><input class="field" type="text" id="ed_sid_txt" disabled></div>
+            <div class="sm:col-span-2"><label class="lbl-f">Full Name</label><input class="field" type="text" name="name" id="ed_name" required></div>
+            <div><label class="lbl-f">Department</label><input class="field" type="text" name="department" id="ed_dept"></div>
+            <div><label class="lbl-f">Section</label><input class="field" type="text" name="section" id="ed_sec"></div>
+            <button type="submit" class="shine sm:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm shadow-md cursor-pointer">Save Changes</button>
+        </form>
+    </div></div>
+
+    <script>
+    (function () {
+        const CSRF = '<%= e(csrf) =%>';
+        const DATA = <%= json_encode_flags(payload) =%>;
+        const $ = function (id) { return document.getElementById(id); };
+        const esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+        const tk = function (n) { return 'Tk ' + (Number(n) || 0).toFixed(2); };
+        const ME = '<%= h(admin_sid) =%>';
+        // due > 0 -> red due ; due < 0 -> green advance ; 0 -> green clear
+        const dueBadge = function (d) {
+            if (d > 0.001) return '<span class="badge bg-rose-100 text-rose-700">' + tk(d) + '</span>';
+            if (d < -0.001) return '<span class="badge bg-emerald-100 text-emerald-700">' + tk(-d) + ' advance</span>';
+            return '<span class="badge bg-emerald-100 text-emerald-700">' + tk(0) + '</span>';
+        };
+        const dueMini = function (d) {
+            if (d > 0.001) return '<div class="mini rose"><p>Due</p><b>' + tk(d) + '</b></div>';
+            if (d < -0.001) return '<div class="mini green"><p>Advance</p><b>' + tk(-d) + '</b></div>';
+            return '<div class="mini green"><p>Due</p><b>' + tk(0) + '</b></div>';
+        };
+        const fmtDate = function (s) {
+            if (!s) return '-';
+            const d = new Date(String(s).replace(' ', 'T'));
+            if (isNaN(d)) return esc(s);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        };
+        const MODE = { bw: ['B&W', 'bg-slate-100 text-slate-700'], color: ['Color', 'bg-fuchsia-100 text-fuchsia-700'], a4: ['A4 Pages', 'bg-sky-100 text-sky-700'], cover: ['Cover Pages', 'bg-violet-100 text-violet-700'] };
+        const STATUS = { Pending: 'bg-amber-100 text-amber-800', Completed: 'bg-emerald-100 text-emerald-800' };
+        const PSTATUS = { Paid: 'bg-emerald-100 text-emerald-800', Partial: 'bg-amber-100 text-amber-800', Unpaid: 'bg-rose-100 text-rose-700' };
+        const IC = {
+            eye: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>',
+            dl: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>', pay: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>', pen: '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>'
+        };
+        const stu = {}; DATA.students.forEach(function (s) { stu[s.student_id] = s; });
+        const ord = {}; DATA.orders.forEach(function (o) { ord[o.id] = o; });
+
+        // ---------- tabs ----------
+        window.showTab = function (name) {
+            document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + name); });
+            document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
+            try { history.replaceState(null, '', '?tab=' + name); } catch (e) {}
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        window.openModal = function (id) { $(id).classList.add('open'); };
+        window.closeModal = function (id) { $(id).classList.remove('open'); };
+        document.querySelectorAll('.mdl').forEach(function (m) { m.addEventListener('click', function (e) { if (e.target === m) m.classList.remove('open'); }); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') document.querySelectorAll('.mdl.open').forEach(function (m) { m.classList.remove('open'); }); });
+
+        // ---------- orders ----------
+        function statusSelect(o) {
+            const opts = ['Pending', 'Completed'].map(function (s) { return '<option ' + (o.status === s ? 'selected' : '') + '>' + s + '</option>'; }).join('');
+            return '<form method="POST" class="inline"><input type="hidden" name="csrf" value="' + CSRF + '"><input type="hidden" name="form_type" value="update_status"><input type="hidden" name="order_id" value="' + o.id + '"><input type="hidden" name="tab" value="orders"><select name="status" onchange="this.form.submit()" class="status-select ' + (STATUS[o.status] || STATUS.Pending) + '">' + opts + '</select></form>';
+        }
+        function bindChip(o) {
+            if (o.print_mode !== 'cover' && (o.print_mode === 'a4' || o.file_path === 'N/A')) return '';
+            const pt = (o.print_mode === 'bw' || o.print_mode === 'color')
+                ? ('<span class="badge ' + (o.print_mode === 'color' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-slate-200 text-slate-700') + '">Print: ' + (o.print_mode === 'color' ? 'Color' : 'B&amp;W') + '</span> ')
+                : '';
+            const cv = (o.print_mode === 'cover') ? '' : (o.cover_page === 'Yes'
+                ? '<span class="badge bg-violet-100 text-violet-700">Cover page: Yes</span> '
+                : '<span class="badge bg-slate-100 text-slate-500">Cover page: No</span> ');
+            const tp = o.binding_type === 'Tape'
+                ? '<span class="badge bg-sky-100 text-sky-700">Tape binding: Yes</span>'
+                : '<span class="badge bg-slate-100 text-slate-500">Tape binding: No</span>';
+            return '<div class="mt-1 flex flex-col items-start gap-1">' + pt + cv + tp + '</div>';
+        }
+        function orderRow(o) {
+            const m = MODE[o.print_mode] || MODE.bw;
+            const hasFile = o.file_path && o.file_path !== 'N/A';
+            return '<tr><td class="text-slate-400 font-bold">#' + o.id + '</td>' +
+                '<td><p class="font-extrabold text-slate-800">' + esc(o.student_name || 'Unknown') + '</p><p class="text-[10px] text-slate-400 font-semibold">' + esc(o.student_id) + '</p></td>' +
+                '<td class="max-w-[150px]"><p class="truncate font-semibold text-slate-700" title="' + esc(o.file_name) + '">' + esc(o.file_name) + '</p></td>' +
+                '<td>' + ((o.print_mode === 'bw' || o.print_mode === 'color') ? '' : '<span class="badge ' + m[1] + '">' + m[0] + '</span>') + bindChip(o) + '</td><td class="font-bold">' + o.total_pages + '</td>' +
+                '<td class="font-black text-indigo-700 whitespace-nowrap">' + tk(o.amount) + '</td><td>' + statusSelect(o) + '</td>' +
+                '<td class="text-[11px] text-slate-500 leading-tight">' + fmtDate(o.date).replace(', ', '<br>') + '</td>' +
+                '<td class="whitespace-nowrap"><button class="icon-btn" title="Details" onclick="openOrder(' + o.id + ')">' + IC.eye + '</button>' +
+                (hasFile ? ' <a class="icon-btn" title="Download PDF" href="?action=download&order_id=' + o.id + '">' + IC.dl + '</a>' : '') + '</td></tr>';
+        }
+        let oFilter = 'All';
+        function renderOrders() {
+            const q = ($('orderSearch').value || '').toLowerCase();
+            const rows = DATA.orders.filter(function (o) {
+                return (oFilter === 'All' || o.status === oFilter) &&
+                    (!q || (o.student_name || '').toLowerCase().includes(q) || String(o.student_id).includes(q) || (o.file_name || '').toLowerCase().includes(q));
+            });
+            $('ordersBody').innerHTML = rows.length ? rows.map(orderRow).join('') : '<tr><td colspan="9" class="empty">No orders found.</td></tr>';
+            $('ordersCount').textContent = '(' + rows.length + ')';
+        }
+        function renderPills() {
+            $('orderPills').innerHTML = ['All', 'Pending', 'Completed'].map(function (s) {
+                const n = s === 'All' ? DATA.orders.length : DATA.orders.filter(function (o) { return o.status === s; }).length;
+                return '<button type="button" class="pill ' + (oFilter === s ? 'on' : '') + '" data-s="' + s + '">' + s + ' <b>' + n + '</b></button>';
+            }).join('');
+            $('orderPills').querySelectorAll('.pill').forEach(function (b) { b.onclick = function () { oFilter = b.dataset.s; renderPills(); renderOrders(); }; });
+        }
+        $('orderSearch').addEventListener('input', renderOrders);
+        $('recentBody').innerHTML = DATA.orders.slice(0, 6).map(orderRow).join('') || '<tr><td colspan="9" class="empty">No orders yet.</td></tr>';
+
+        window.openOrder = function (id) {
+            const o = ord[id]; if (!o) return;
+            const m = MODE[o.print_mode] || MODE.bw;
+            const isPrint = (o.print_mode === 'bw' || o.print_mode === 'color');
+            const row = function (k, v) { return '<div class="kv"><span>' + k + '</span><b>' + v + '</b></div>'; };
+            const isCover = (o.print_mode === 'cover');
+            const nameParts = String(o.file_name || '').split(' || ');
+            let subjBox = '';
+            if (isCover) {
+                const items = nameParts.slice(1).map(function (part) {
+                    const mm = part.match(/^(.*?)\s*-\s*(\d+)\s*Pcs$/i);
+                    return mm
+                        ? '<div class="flex justify-between gap-3 bg-white/80 rounded-lg px-2.5 py-2 text-xs"><span class="font-semibold text-slate-700 truncate">' + esc(mm[1]) + '</span><span class="font-black text-violet-700 whitespace-nowrap">' + mm[2] + ' Pcs</span></div>'
+                        : '<div class="flex justify-between gap-3 bg-white/80 rounded-lg px-2.5 py-2 text-xs"><span class="font-semibold text-slate-700">' + esc(part) + '</span></div>';
+                }).join('') || '<div class="text-xs font-semibold text-slate-600">Cover pages: ' + (o.total_pages || 0) + ' Pcs</div>';
+                subjBox = '<div class="p-3 bg-violet-50 rounded-xl border border-violet-100"><div class="text-xs font-bold text-slate-500 mb-2">Subjects &amp; Cover Quantity:</div><div class="space-y-1.5">' + items + '</div></div>';
+            }
+            let h = row('Student', esc(o.student_name || 'Unknown')) + row('Student ID', esc(o.student_id)) + row('Item', esc(isCover ? nameParts[0] : o.file_name)) + row('Type', '<span class="badge ' + m[1] + '">' + m[0] + '</span>') + subjBox + row('Total Pages', o.total_pages + ' Pcs');
+            if (o.print_mode === 'color') h += row('Breakdown', o.color_pages + ' Color, ' + o.bw_pages + ' B&W');
+            if (isPrint) h += row('Cover Page', o.cover_page === 'Yes' ? '<span class="badge bg-violet-100 text-violet-700">Yes</span>' : '<span class="badge bg-slate-100 text-slate-500">No</span>');
+            if (isCover || (o.print_mode !== 'a4' && o.file_path !== 'N/A')) h += row('Tape Binding', o.binding_type === 'Tape' ? '<span class="badge bg-sky-100 text-sky-700">Yes</span>' : '<span class="badge bg-slate-100 text-slate-500">' + (o.binding_type === 'Stapler' ? 'No (Stapler only)' : 'No') + '</span>');
+            h += row('Ordered On', fmtDate(o.date)) + row('Status', statusSelect(o)) + '<div class="kv total"><span>Total Cost</span><b>' + tk(o.amount) + '</b></div>';
+            if (o.file_path && o.file_path !== 'N/A') h += '<a href="?action=download&order_id=' + o.id + '" class="shine mt-4 w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl text-sm font-extrabold shadow-md flex items-center gap-2">' + IC.dl + 'Download PDF</a>';
+            $('orderModalBody').innerHTML = '<div class="space-y-2">' + h + '</div>';
+            openModal('m-order');
+        };
+
+        // ---------- students ----------
+        let dueOnly = false;
+        function renderStudents() {
+            const q = ($('studentSearch').value || '').toLowerCase();
+            const rows = DATA.students.filter(function (s) {
+                return (!dueOnly || s.due > 0) && (!q || (s.name || '').toLowerCase().includes(q) || String(s.student_id).includes(q) || (s.email || '').toLowerCase().includes(q));
+            });
+            $('studentsBody').innerHTML = rows.length ? rows.map(function (s) {
+                const acc = s.registered ? (s.role === 'admin' ? '<span class="badge bg-violet-100 text-violet-700">Admin</span>' : '<span class="badge bg-emerald-100 text-emerald-700">Registered</span>') : '<span class="badge bg-slate-100 text-slate-500">Not registered</span>';
+                return '<tr><td><p class="font-extrabold text-slate-800">' + esc(s.name) + '</p><p class="text-[10px] text-slate-400 font-semibold">' + esc(s.student_id) + '</p></td>' +
+                    '<td class="text-slate-600 font-semibold">' + esc(s.department) + ' &middot; ' + esc(s.section) + '</td>' +
+                    '<td>' + (s.email ? '<p class="font-semibold text-slate-700">' + esc(s.email) + '</p>' : '<span class="text-[11px] font-semibold text-slate-300">Not registered yet</span>') + '</td>' +
+                    '<td><p class="font-black text-slate-700">' + s.order_count + '</p><p class="text-[10px] text-slate-400">' + tk(s.order_total) + '</p></td>' +
+                    '<td>' + dueBadge(s.due) + '</td><td>' + acc + '</td>' +
+                    '<td class="whitespace-nowrap"><button class="icon-btn" title="View" onclick="openStudent(\'' + esc(s.student_id) + '\')">' + IC.eye + '</button> ' +
+                    (s.due > 0 ? '<button class="icon-btn green" title="Receive payment" onclick="openPay(\'' + esc(s.student_id) + '\')">' + IC.pay + '</button> ' : '') +
+                    '<button class="icon-btn" title="Edit" onclick="openEdit(\'' + esc(s.student_id) + '\')">' + IC.pen + '</button></td></tr>';
+            }).join('') : '<tr><td colspan="7" class="empty">No students found.</td></tr>';
+            $('studentsCount').textContent = '(' + rows.length + ')';
+        }
+        $('studentSearch').addEventListener('input', renderStudents);
+
+        window.openStudent = function (sid) {
+            const s = stu[sid]; if (!s) return;
+            const os = DATA.orders.filter(function (o) { return o.student_id === sid; });
+            const ps = DATA.payments.filter(function (p) { return p.student_id === sid; });
+            const paid = ps.reduce(function (a, p) { return a + p.amount; }, 0);
+            const info = function (k, v) { return '<div class="kv"><span>' + k + '</span><b>' + v + '</b></div>'; };
+            let h = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' + info('Name', esc(s.name)) + info('Student ID', esc(s.student_id)) + info('Department', esc(s.department)) + info('Section', esc(s.section)) + info('Gmail', s.email ? esc(s.email) : 'Not registered yet') + info('Account', s.registered ? esc(s.role) : 'Not registered') + info('Added', fmtDate(s.created_at)) + '</div>';
+            h += '<div class="grid grid-cols-3 gap-3 my-5">' + dueMini(s.due) + '<div class="mini green"><p>Paid</p><b>' + tk(paid) + '</b></div><div class="mini"><p>Ordered</p><b>' + tk(s.order_total) + '</b></div></div>';
+            h += '<p class="sec-t">Orders (' + os.length + ')</p>';
+            h += os.length ? '<div class="overflow-x-auto"><table class="tbl"><thead><tr><th>#</th><th>Item</th><th>Type</th><th>Pages</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>' + os.map(function (o) { const m = MODE[o.print_mode] || MODE.bw; return '<tr><td class="text-slate-400 font-bold">#' + o.id + '</td><td class="max-w-[200px] truncate font-semibold">' + esc(o.file_name) + '</td><td><span class="badge ' + m[1] + '">' + m[0] + '</span></td><td>' + o.total_pages + '</td><td class="font-black text-indigo-700">' + tk(o.amount) + '</td><td><span class="badge ' + (STATUS[o.status] || STATUS.Pending) + '">' + esc(o.status) + '</span></td><td class="text-[11px] text-slate-500 whitespace-nowrap">' + fmtDate(o.date) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">No orders yet.</p>';
+            h += '<p class="sec-t mt-5">Payments (' + ps.length + ')</p>';
+            h += ps.length ? '<div class="overflow-x-auto"><table class="tbl"><thead><tr><th>Amount</th><th>Method</th><th>TrxID</th><th>Status</th><th>Date</th></tr></thead><tbody>' + ps.map(function (p) { return '<tr><td class="font-black text-emerald-700">' + tk(p.amount) + '</td><td>' + esc(p.method) + '</td><td class="font-mono text-[11px]">' + esc(p.trx || '-') + '</td><td><span class="badge ' + (PSTATUS[p.status] || PSTATUS.Unpaid) + '">' + esc(p.status) + '</span></td><td class="text-[11px] text-slate-500 whitespace-nowrap">' + fmtDate(p.date) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="empty">No payments yet.</p>';
+            h += '<div class="flex flex-wrap gap-3 mt-6">' + (s.due > 0 ? '<button onclick="closeModal(\'m-student\'); openPay(\'' + esc(sid) + '\')" class="shine flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl text-sm font-extrabold shadow-md cursor-pointer">Receive Payment</button>' : '') + '<button onclick="closeModal(\'m-student\'); openEdit(\'' + esc(sid) + '\')" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-3 rounded-2xl text-sm font-extrabold cursor-pointer">Edit Student</button></div>';
+            $('studentModalBody').innerHTML = h;
+            openModal('m-student');
+        };
+        // ---------- receive cash (everyone's due in one list, one Update button per student) ----------
+        let cashDueOnly = false;
+        function renderCash() {
+            const q = ($('cashSearch').value || '').toLowerCase();
+            const rows = DATA.students.filter(function (s) {
+                return (!cashDueOnly || s.due > 0) && (!q || (s.name || '').toLowerCase().includes(q) || String(s.student_id).includes(q));
+            }).sort(function (a, b) { return b.due - a.due; });
+            $('cashBody').innerHTML = rows.length ? rows.map(function (s) {
+                const has = true, id = esc(s.student_id);
+                return '<tr><td><p class="font-extrabold text-slate-800">' + esc(s.name) + '</p><p class="text-[10px] text-slate-400 font-semibold">' + id + '</p></td>' +
+                    '<td class="text-slate-600 font-semibold">' + esc(s.department) + ' &middot; ' + esc(s.section) + '</td>' +
+                    '<td>' + dueBadge(s.due) + '</td>' +
+                    '<td><form method="POST" class="flex items-center gap-2 flex-wrap" data-sid="' + id + '" onsubmit="return checkCash(this)">' +
+                    '<input type="hidden" name="csrf" value="' + CSRF + '"><input type="hidden" name="form_type" value="receive_payment"><input type="hidden" name="tab" value="cash"><input type="hidden" name="method" value="Cash"><input type="hidden" name="student_id" value="' + id + '">' +
+                    '<input class="field cash-in" type="number" step="0.01" min="0.01" name="amount" placeholder="Tk" ' + (has ? '' : 'disabled') + '>' +
+                    (s.due > 0 ? '<button type="button" class="pill" onclick="fillFull(this)">Full</button>' : '') +
+                    '<button type="submit" class="upd-btn" ' + (has ? '' : 'disabled') + '>Update</button>' +
+                    '<span class="cash-left text-[11px] font-bold text-slate-400"></span></form></td></tr>';
+            }).join('') : '<tr><td colspan="4" class="empty">No students found.</td></tr>';
+            $('cashCount').textContent = '(' + rows.length + ')';
+        }
+        $('cashBody').addEventListener('input', function (e) {
+            if (!e.target.classList.contains('cash-in')) return;
+            const f = e.target.form, s = stu[f.dataset.sid], left = f.querySelector('.cash-left');
+            const amt = parseFloat(e.target.value) || 0;
+            const after = s.due - amt;
+            left.innerHTML = !amt ? '' : (after < -0.001 ? 'Advance: <span class="text-emerald-600">' + tk(-after) + '</span>' : 'Due left: <span class="' + (after > 0.001 ? 'text-rose-600' : 'text-emerald-600') + '">' + tk(Math.max(0, after)) + '</span>');
+        });
+        window.fillFull = function (btn) {
+            const f = btn.closest('form'), s = stu[f.dataset.sid], inp = f.querySelector('.cash-in');
+            inp.value = s.due.toFixed(2); inp.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        window.checkCash = function (f) {
+            const s = stu[f.dataset.sid];
+            if (!s) return false;
+            const amt = parseFloat(f.querySelector('.cash-in').value) || 0;
+            if (amt <= 0) { alert('Please enter a valid amount.'); return false; }
+            const after = s.due - amt;
+            return confirm('Receive ' + tk(amt) + ' from ' + s.name + '?\n' + (after < -0.001 ? 'Due will be Tk 0.00 and ' + tk(-after) + ' will be saved as advance.' : 'Due after: ' + tk(Math.max(0, after))));
+        };
+        $('cashSearch').addEventListener('input', renderCash);
+        $('cashDueOnly').addEventListener('change', function () { cashDueOnly = this.checked; renderCash(); });
+        window.openPay = function (sid) {
+            $('cashSearch').value = sid || ''; renderCash(); showTab('cash');
+            if (sid) { const inp = document.querySelector('#cashBody .cash-in:not([disabled])'); if (inp) setTimeout(function () { inp.focus(); }, 60); }
+        };
+
+        // ---------- registered students + password ----------
+        function renderRegistered() {
+            const q = ($('regSearch').value || '').toLowerCase();
+            const rows = DATA.students.filter(function (s) {
+                return s.registered && (!q || (s.name || '').toLowerCase().includes(q) || String(s.student_id).includes(q) || (s.email || '').toLowerCase().includes(q));
+            });
+            $('regBody').innerHTML = rows.length ? rows.map(function (s) {
+                let pw;
+                if (s.pw_kind === 'plain') pw = '<span class="pw-val font-mono text-[12px] font-bold text-slate-700" data-pw="' + esc(s.password) + '" data-shown="0">\u2022\u2022\u2022\u2022\u2022\u2022</span> <button type="button" class="pill" onclick="togglePw(this)">Show</button>';
+                else if (s.pw_kind === 'empty') pw = '<span class="text-[11px] font-semibold text-slate-300">Not set</span>';
+                else pw = '<span class="badge bg-slate-100 text-slate-500" title="Stored as a secure hash - it cannot be viewed, only changed">Hashed (hidden)</span>';
+                const isAdm = s.role === 'admin';
+                const acc = (s.student_id === ME)
+                    ? '<span class="badge bg-violet-100 text-violet-700">Admin (you)</span>'
+                    : '<form method="POST" class="inline"><input type="hidden" name="csrf" value="' + CSRF + '"><input type="hidden" name="form_type" value="change_role"><input type="hidden" name="tab" value="registered"><input type="hidden" name="student_id" value="' + esc(s.student_id) + '">' +
+                      '<select name="role" onchange="confirmRole(this)" class="status-select ' + (isAdm ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700') + '"><option value="student"' + (isAdm ? '' : ' selected') + '>Student</option><option value="admin"' + (isAdm ? ' selected' : '') + '>Admin</option></select></form>';
+                return '<tr><td><p class="font-extrabold text-slate-800">' + esc(s.name) + '</p><p class="text-[10px] text-slate-400 font-semibold">' + esc(s.student_id) + '</p></td>' +
+                    '<td class="text-slate-600 font-semibold">' + esc(s.department) + ' &middot; ' + esc(s.section) + '</td>' +
+                    '<td class="font-semibold text-slate-700">' + (s.email ? esc(s.email) : '-') + '</td>' +
+                    '<td class="whitespace-nowrap">' + pw + '</td><td>' + acc + '</td>' +
+                    '<td class="whitespace-nowrap"><button type="button" class="pill on" onclick="openPw(\'' + esc(s.student_id) + '\')">Change password</button></td></tr>';
+            }).join('') : '<tr><td colspan="6" class="empty">No registered students found.</td></tr>';
+            $('regCount').textContent = '(' + rows.length + ')';
+        }
+        $('regSearch').addEventListener('input', renderRegistered);
+        window.confirmRole = function (sel) {
+            const f = sel.form, s = stu[f.student_id.value];
+            if (confirm('Change the role of ' + s.name + ' to ' + sel.value.toUpperCase() + '?')) { f.submit(); } else { sel.value = s.role === 'admin' ? 'admin' : 'student'; }
+        };
+        window.togglePw = function (btn) {
+            const sp = btn.parentNode.querySelector('.pw-val'), shown = sp.getAttribute('data-shown') === '1';
+            sp.textContent = shown ? '\u2022\u2022\u2022\u2022\u2022\u2022' : sp.getAttribute('data-pw');
+            sp.setAttribute('data-shown', shown ? '0' : '1'); btn.textContent = shown ? 'Show' : 'Hide';
+        };
+        window.openPw = function (sid) {
+            const s = stu[sid]; if (!s) return;
+            $('pw_sid').value = sid; $('pw_name').textContent = s.name; $('pw_sid_txt').textContent = sid; $('pw_new').value = '';
+            openModal('m-pw'); setTimeout(function () { $('pw_new').focus(); }, 60);
+        };
+        window.openEdit = function (sid) {
+            const s = stu[sid]; if (!s) return;
+            $('ed_sid').value = sid; $('ed_sid_txt').value = sid; $('ed_name').value = s.name; $('ed_dept').value = s.department; $('ed_sec').value = s.section;
+            openModal('m-edit');
+        };
+
+        // ---------- payments ----------
+        function renderPayments() {
+            const q = ($('paymentSearch').value || '').toLowerCase();
+            const rows = DATA.payments.filter(function (p) { return !q || (p.student_name || '').toLowerCase().includes(q) || String(p.student_id).includes(q) || String(p.trx || '').toLowerCase().includes(q); });
+            $('paymentsBody').innerHTML = rows.length ? rows.map(function (p) {
+                return '<tr><td class="text-slate-400 font-bold">#' + p.id + '</td><td><p class="font-extrabold text-slate-800">' + esc(p.student_name || 'Unknown') + '</p><p class="text-[10px] text-slate-400 font-semibold">' + esc(p.student_id) + '</p></td>' +
+                    '<td class="font-black text-emerald-700 whitespace-nowrap">' + tk(p.amount) + '</td><td><span class="badge ' + (p.method === 'bKash' ? 'bg-pink-100 text-pink-700' : 'bg-slate-100 text-slate-700') + '">' + esc(p.method) + '</span></td>' +
+                    '<td class="font-mono text-[11px]">' + esc(p.trx || '-') + '</td><td><span class="badge ' + (PSTATUS[p.status] || PSTATUS.Unpaid) + '">' + esc(p.status) + '</span></td><td class="text-[11px] text-slate-500 whitespace-nowrap">' + fmtDate(p.date) + '</td></tr>';
+            }).join('') : '<tr><td colspan="7" class="empty">No payments found.</td></tr>';
+            $('paymentsCount').textContent = '(' + rows.length + ')';
+        }
+        $('paymentSearch').addEventListener('input', renderPayments);
+        $('cashTotal').textContent = tk(DATA.payments.filter(function (p) { return p.method === 'Cash'; }).reduce(function (a, p) { return a + p.amount; }, 0));
+        $('bkashTotal').textContent = tk(DATA.payments.filter(function (p) { return p.method === 'bKash'; }).reduce(function (a, p) { return a + p.amount; }, 0));
+
+        renderPills(); renderOrders(); renderStudents(); renderPayments(); renderCash(); renderRegistered();
+        showTab('<%= e(active_tab) =%>');
+        <%PY if open_add PY%>openModal('m-add');<%PY endif PY%>        window.scrollTo(0, 0);
+
+        // ---------- motion ----------
+        const bar = $('scrollBar');
+        function onScroll() { const h = document.documentElement.scrollHeight - window.innerHeight; if (bar) bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%'; }
+        window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+        document.querySelectorAll('[data-count]').forEach(function (el) {
+            const target = parseFloat(el.getAttribute('data-count')) || 0, dec = parseInt(el.getAttribute('data-dec') || '0'), pre = el.getAttribute('data-prefix') || '', t0 = performance.now();
+            (function tick(now) {
+                const p = Math.min((now - t0) / 1200, 1), v = target * (1 - Math.pow(1 - p, 3));
+                el.textContent = pre + v.toFixed(dec);
+                if (p < 1) requestAnimationFrame(tick);
+            })(t0);
+        });
+
+        const bear = $('heroBear'), p1 = $('pupil1'), p2 = $('pupil2');
+        if (bear && p1 && p2) {
+            document.addEventListener('mousemove', function (e) {
+                const r = bear.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height * 0.55);
+                const dist = Math.hypot(dx, dy) || 1, k = Math.min(dist / 140, 1);
+                const t = 'translate(' + ((dx / dist) * 9 * k).toFixed(1) + 'px, ' + ((dy / dist) * 8 * k).toFixed(1) + 'px)';
+                p1.style.transform = t; p2.style.transform = t;
+            });
+        }
+        const toast = $('toast');
+        if (toast) setTimeout(function () { toast.style.transition = 'opacity .5s, transform .5s'; toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(function () { toast.remove(); }, 600); }, 4000);
+    })();
+    </script>
+</body>
+</html>
